@@ -80,6 +80,10 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
 
   useEffect(() => {
     setIframeLoading(true);
+    const timer = setTimeout(() => {
+      setIframeLoading(false);
+    }, 4500);
+    return () => clearTimeout(timer);
   }, [game.id, iframeKey]);
 
   useEffect(() => {
@@ -397,7 +401,14 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
                     <div className="h-full bg-gradient-to-r from-violet-600 via-cyan-400 to-emerald-400 animate-pulse rounded-full w-full" />
                   </div>
 
-                  <div className="mt-4 flex items-center gap-3 text-[11px] text-slate-400 font-mono">
+                  <button
+                    onClick={() => setIframeLoading(false)}
+                    className="mt-4 px-4 py-1.5 rounded-lg bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-200 border border-cyan-500/40 text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    Click to Start Now ➔
+                  </button>
+
+                  <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-400 font-mono">
                     <span className="text-emerald-400 font-bold">● 60 FPS Native</span>
                     <span>•</span>
                     <span>Direct GPU Acceleration</span>
