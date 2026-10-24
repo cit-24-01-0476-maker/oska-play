@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Super Mario 64 PC Web!🎩</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+  </head>
+  <body>
+
+    <!-- Target the entire game-container for Fullscreen to protect overlays -->
+    <div id="game-container">
+      
+      <!-- Canvas Display -->
+      <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+
+      <!-- Floating Top Toolbar -->
+      <div id="toolbar">
+        <button id="btn-fullscreen" onclick="toggleFullscreen()">fullscreen</button>
+        <button id="btn-instructions" onclick="toggleInstructions()">controls</button>
+        <button id="btn-export-save" onclick="exportSave()">backup save</button>
+        <button id="btn-import-save" onclick="document.getElementById('file-input').click()">load save</button>
+        <button id="btn-touch">toggle touch</button>
+        <input type="file" id="file-input" style="display:none;" onchange="importSave(event)" accept=".bin">
+      </div>
+
+      <!-- Instructions Overlay Modal -->
+      <div id="controls-modal" class="modal">
+        <div class="modal-content">
+          <span class="close-btn" onclick="toggleInstructions()">&times;</span>
+          <img src="images/SuperMario64.png" alt="Super Mario 64" class="header-logo">
+          
+          <div class="instructions-grid">
+            <div class="instruction-box">
+              <h3>Keyboard Controls</h3>
+              <ul>
+                <li><strong>Move:</strong> WASD</li>
+                <li><strong>A (Jump):</strong> L</li>
+                <li><strong>B (Attack):</strong> ,</li>
+                <li><strong>Z (Crouch):</strong> K</li>
+                <li><strong>R (Camera):</strong> Shift</li>
+                <li><strong>Start:</strong> Space</li>
+                <li><strong>C-Buttons:</strong> Arrow Keys</li>
+              </ul>
+            </div>
+            <div class="instruction-box">
+              <h3>Features & Info</h3>
+              <p>Gamepad Supported, just plug in and play.</p>
+              <p>Save files (work in progress, it may work).</p>
+              <p><a href="https://notan127.github.io/SM64-PC-Port-WebGL/classic/" target="_blank">Switch to Classic Port</a></p>
+              <p><a href="https://notan127.github.io/SM64-PC-Port-WebGL/Old%20Stuff/" target="_blank">Switch to Old Version</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image-based Touch Controls -->
+      <div id="touch-controls">
+        <div id="edit-layout-btn" class="layout-icon">✏️</div>
+        <div id="reset-layout-btn" class="layout-icon" style="display: none;">🔄</div>
+        
+        <div id="joystick-container" class="touch-button">
+          <div id="joystick-base">
+            <div id="joystick-knob"></div>
+          </div>
+        </div>
+
+        <div id="touch-actions">
+          <!-- R & Start Buttons -->
+          <button id="touch-r" class="t-btn touch-button action-r" data-key="ShiftRight"></button>
+          <button id="touch-start" class="t-btn touch-button action-start" data-key="Space"></button>
+
+          <!-- C-Buttons -->
+          <button id="touch-c-up" class="t-btn touch-button action-c-u" data-key="ArrowUp"></button>
+          <button id="touch-c-down" class="t-btn touch-button action-c-d" data-key="ArrowDown"></button>
+          <button id="touch-c-left" class="t-btn touch-button action-c-l" data-key="ArrowLeft"></button>
+          <button id="touch-c-right" class="t-btn touch-button action-c-r" data-key="ArrowRight"></button>
+
+          <!-- Standard Action Face Buttons -->
+          <button id="touch-a" class="t-btn touch-button action-a" data-key="KeyL"></button>
+          <button id="touch-b" class="t-btn touch-button action-b" data-key="Comma"></button>
+          <button id="touch-z" class="t-btn touch-button action-z" data-key="KeyK"></button>
+        </div>
+      </div>
+
+    </div>
+
+    <script type='text/javascript'>
+
+const controls = document.querySelectorAll('.touch-button');
+let isEditMode = false;
+
+const editBtn = document.getElementById('edit-layout-btn');
+const resetBtn = document.getElementById('reset-layout-btn');
+
+document.getElementById('btn-touch').addEventListener('click', toggleTouchControls);
+
+function setEditMode(enabled) {
+    isEditMode = enabled;
+    document.body.classList.toggle('edit-mode-active', isEditMode);
+
+    if (isEditMode) {
+        editBtn.innerText = '✅';
+        resetBtn.style.display = 'flex';
+    } else {
+        editBtn.innerText = '✏️';
+        resetBtn.style.display = 'none';
+        activeControl = null;
+        saveLayout();
+    }
+}
+
+editBtn.addEventListener('click', () => setEditMode(!isEditMode));
+
+// Reset with a safety confirmation
+resetBtn.addEventListener('click', () => {
+    if (confirm("Reset touch controls to default positions?")) {
+        localStorage.removeItem('sm64_touch_layout');
+        location.reload(); 
+    }
+});
+
+// Dragging Logic Variables
+let activeControl = null;
+let startX, startY, initialX, initialY;
+
+controls.forEach(control => {
+    control.addEventListener('pointerdown', (e) => {
+        if (!isEditMode) return;
+
+        activeControl = control;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialX = parseFloat(control.dataset.layoutX) || 0;
+        initialY = parseFloat(control.dataset.layoutY) || 0;
+
+        control.setPointerCapture(e.pointerId);
+    });
+
+    control.addEventListener('pointermove', (e) => {
+        if (!isEditMode || activeControl !== control) return;
+
+        const newX = initialX + ((e.clientX - startX) / window.innerWidth) * 100;
+        const newY = initialY + ((e.clientY - startY) / window.innerHeight) * 100;
+        control.dataset.layoutX = newX;
+        control.dataset.layoutY = newY;
+        control.style.transform = `translate(${newX}vw, ${newY}vh)`;
+    });
+
+    function finishDrag() {
+        if (activeControl !== control) return;
+        activeControl = null;
+    }
+
+    control.addEventListener('pointerup', finishDrag);
+    control.addEventListener('pointercancel', finishDrag);
+});
+
+// Save to Browser Storage
+function saveLayout() {
+    const layout = {};
+    controls.forEach(control => {
+        layout[control.id] = {
+            x: parseFloat(control.dataset.layoutX) || 0,
+            y: parseFloat(control.dataset.layoutY) || 0
+        };
+    });
+    localStorage.setItem('sm64_touch_layout', JSON.stringify(layout));
+}
+
+// Load from Browser Storage on Startup
+function loadLayout() {
+    const saved = localStorage.getItem('sm64_touch_layout');
+    if (saved) {
+        const layout = JSON.parse(saved);
+        controls.forEach(control => {
+            if (layout[control.id]) {
+                const x = Number(layout[control.id].x) || 0;
+                const y = Number(layout[control.id].y) || 0;
+                control.dataset.layoutX = x;
+                control.dataset.layoutY = y;
+                control.style.transform = `translate(${x}vw, ${y}vh)`;
+            }
+        });
+    }
+}
+
+// Run layout load immediately when the script runs
+loadLayout();
+      
+      var Module = {
+        preRun: [],
+        postRun: [],
+        print: function(text) {
+          if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+          console.log(text);
+        },
+        printErr: function(text) {
+          if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+          console.error(text);
+        },
+        canvas: (function() {
+          var canvas = document.getElementById('canvas');
+          
+          // Force explicit pixel dimensions for mobile WebGL compatibility
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+          
+          // Auto-resize if the user rotates their phone
+          window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+          }, false);
+
+          canvas.addEventListener("webglcontextlost", function(e) {
+            alert('WebGL context lost. Please reload the page.');
+            e.preventDefault();
+          }, false);
+          
+          return canvas;
+        })(),
+        setStatus: function(text) {}
+      };
+
+      // Toggles the entire game-container so overlays stay visible in Fullscreen
+      function toggleFullscreen() {
+        var container = document.getElementById('game-container');
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (container.requestFullscreen) {
+            container.requestFullscreen();
+          } else if (container.webkitRequestFullscreen) {
+            container.webkitRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
+      }
+
+      function toggleInstructions() {
+        var modal = document.getElementById('controls-modal');
+        modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+      }
+
+      function exportSave() {
+        var encodedSave;
+        try {
+          encodedSave = localStorage.getItem('sm64_save_file');
+        } catch (err) {
+          alert("Unable to access the browser's save storage: " + err.message);
+          return;
+        }
+
+        if (!encodedSave) {
+          alert("No save data is stored yet. Play until the game saves, then try again.");
+          return;
+        }
+
+        var binary;
+        try {
+          binary = atob(encodedSave);
+        } catch (err) {
+          alert("The stored save data is invalid and cannot be backed up.");
+          return;
+        }
+        if (binary.length !== 512) {
+          alert("The stored save data is invalid and cannot be backed up.");
+          return;
+        }
+
+        var saveArray = new Uint8Array(binary.length);
+        for (var i = 0; i < binary.length; i++) {
+          saveArray[i] = binary.charCodeAt(i);
+        }
+        var blob = new Blob([saveArray], { type: 'application/octet-stream' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'sm64_save_file.bin';
+        link.click();
+      }
+
+      function importSave(event) {
+        var file = event.target.files[0];
+        if (!file) return;
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var data = new Uint8Array(e.target.result);
+          if (data.length !== 512) {
+            alert("Invalid save file. A Super Mario 64 save file must be exactly 512 bytes.");
+            return;
+          }
+
+          var binary = '';
+          for (var i = 0; i < data.length; i++) {
+            binary += String.fromCharCode(data[i]);
+          }
+
+          try {
+            localStorage.setItem('sm64_save_file', btoa(binary));
+            alert("Save imported successfully! Reload the webpage to load your save.");
+          } catch (err) {
+            alert("Error importing save: " + err.message);
+          }
+        };
+        reader.onerror = function() {
+          alert("Unable to read the selected save file.");
+        };
+        reader.readAsArrayBuffer(file);
+        event.target.value = '';
+      }
+
+      // Mobile Touch & Mouse Joystick Synthetic Events Handler
+      var touchControlsSetup = false;
+      var joystickBase = null;
+      var joystickKnob = null;
+      var isDraggingJoystick = false;
+      var joystickPointerId = null;
+      var joystickKeys = { 'KeyW': false, 'KeyS': false, 'KeyA': false, 'KeyD': false };
+
+      function setupTouchControls() {
+        if (touchControlsSetup) return;
+
+        // Action Buttons (Touch + Mouse Support)
+        var buttons = document.querySelectorAll('.t-btn');
+        buttons.forEach(function(btn) {
+          var key = btn.getAttribute('data-key');
+          
+          function pressKey(e) {
+            e.preventDefault();
+            if (isEditMode) return;
+            window.dispatchEvent(new KeyboardEvent('keydown', { code: key, bubbles: true }));
+          }
+          function releaseKey(e) {
+            e.preventDefault();
+            if (isEditMode) return;
+            window.dispatchEvent(new KeyboardEvent('keyup', { code: key, bubbles: true }));
+          }
+
+          btn.addEventListener('touchstart', pressKey, { passive: false });
+          btn.addEventListener('touchend', releaseKey);
+          btn.addEventListener('mousedown', pressKey);
+          btn.addEventListener('mouseup', releaseKey);
+          btn.addEventListener('mouseleave', releaseKey);
+        });
+
+        // Joystick Event Listeners
+        joystickBase = document.getElementById('joystick-base');
+        joystickKnob = document.getElementById('joystick-knob');
+
+        function startDrag(e) {
+          e.preventDefault();
+          if (isEditMode) return;
+          isDraggingJoystick = true;
+          var clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+          var clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+          if (e.changedTouches) joystickPointerId = e.changedTouches[0].identifier;
+          
+          updateJoystick(clientX, clientY);
+        }
+
+        function moveDrag(e) {
+          if (!isDraggingJoystick) return;
+          e.preventDefault();
+          
+          var clientX = e.clientX;
+          var clientY = e.clientY;
+          
+          if (e.changedTouches) {
+            var touch = Array.from(e.touches).find(t => t.identifier === joystickPointerId);
+            if (!touch) return;
+            clientX = touch.clientX;
+            clientY = touch.clientY;
+          }
+          
+          updateJoystick(clientX, clientY);
+        }
+
+        function endDrag(e) {
+          if (!isDraggingJoystick) return;
+          
+          if (e.changedTouches) {
+            var ended = Array.from(e.changedTouches).find(t => t.identifier === joystickPointerId);
+            if (!ended) return; 
+          }
+          
+          isDraggingJoystick = false;
+          joystickPointerId = null;
+          joystickKnob.style.transform = 'translate(0px, 0px)';
+          
+          for (var key in joystickKeys) {
+            if (joystickKeys[key]) {
+              window.dispatchEvent(new KeyboardEvent('keyup', { code: key, bubbles: true }));
+              joystickKeys[key] = false;
+            }
+          }
+        }
+
+        // Bind Touch Events
+        joystickBase.addEventListener('touchstart', startDrag, { passive: false });
+        document.addEventListener('touchmove', moveDrag, { passive: false });
+        document.addEventListener('touchend', endDrag);
+        document.addEventListener('touchcancel', endDrag);
+        
+        // Bind Mouse Events (For PC Testing)
+        joystickBase.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', moveDrag);
+        document.addEventListener('mouseup', endDrag);
+
+        touchControlsSetup = true;
+      }
+
+      function updateJoystick(clientX, clientY) {
+        var rect = joystickBase.getBoundingClientRect();
+        var centerX = rect.left + rect.width / 2;
+        var centerY = rect.top + rect.height / 2;
+        
+        var dx = clientX - centerX;
+        var dy = clientY - centerY;
+        var distance = Math.sqrt(dx * dx + dy * dy);
+        var maxRadius = rect.width / 2;
+
+        if (distance > maxRadius) {
+          dx = (dx / distance) * maxRadius;
+          dy = (dy / distance) * maxRadius;
+          distance = maxRadius;
+        }
+
+        joystickKnob.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+
+        var deadzone = 12;
+        var keysToPress = { 'KeyW': false, 'KeyS': false, 'KeyA': false, 'KeyD': false };
+
+        if (distance > deadzone) {
+          var ndx = dx / distance;
+          var ndy = dy / distance;
+
+          if (ndx > 0.38) keysToPress['KeyD'] = true; 
+          if (ndx < -0.38) keysToPress['KeyA'] = true; 
+          if (ndy > 0.38) keysToPress['KeyS'] = true; 
+          if (ndy < -0.38) keysToPress['KeyW'] = true; 
+        }
+
+        for (var key in keysToPress) {
+          if (keysToPress[key] && !joystickKeys[key]) {
+            window.dispatchEvent(new KeyboardEvent('keydown', { code: key, bubbles: true }));
+            joystickKeys[key] = true;
+          } else if (!keysToPress[key] && joystickKeys[key]) {
+            window.dispatchEvent(new KeyboardEvent('keyup', { code: key, bubbles: true }));
+            joystickKeys[key] = false;
+          }
+        }
+      }
+
+      function toggleTouchControls() {
+        var touchDiv = document.getElementById('touch-controls');
+        if (touchDiv.style.display === 'none' || touchDiv.style.display === '') {
+          touchDiv.style.display = 'block';
+          setupTouchControls();
+        } else {
+          if (isEditMode) setEditMode(false);
+          touchDiv.style.display = 'none';
+        }
+      }
+
+      var isMobileOS = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobileOS) {
+        document.getElementById('touch-controls').style.display = 'block';
+        setupTouchControls();
+      } else {
+        document.getElementById('touch-controls').style.display = 'none';
+      }
+    </script>
+    <script async type="text/javascript" src="game/sm64.us.f3dex2e.js"></script>
+  </body>
+</html>

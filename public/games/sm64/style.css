@@ -1,0 +1,286 @@
+@font-face {
+  font-family: "Mario64";
+  src: url(fonts/Mario64.ttf) format("truetype");
+}
+
+@font-face {
+  font-family: "Mario64DS";
+  src: url(fonts/Super-Mario-64-DS.ttf) format("truetype");
+  font-weight: normal;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #000;
+  font-family: "Mario64", sans-serif;
+  color: #fff;
+}
+
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+  overflow: hidden;
+}
+
+canvas.emscripten {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border: none;
+}
+
+/* Toolbar Controls */
+#toolbar {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 8px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  opacity: 0.3;
+  transition: opacity 0.2s ease;
+}
+
+#toolbar:hover {
+  opacity: 1;
+}
+
+#toolbar button {
+  background: #020094;
+  color: #00e5ff;
+  border: 1px solid #00aeff;
+  padding: 6px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+#toolbar button:hover {
+  background: #00aeff;
+  color: #000;
+}
+
+/* Instructions Modal */
+.modal {
+  display: none;
+  position: absolute;
+  z-index: 100;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: linear-gradient(to bottom, #000000 0%, #020094 100%);
+  border: 2px solid #00aeff;
+  border-radius: 25px;
+  padding: 20px;
+  width: 90%;
+  max-width: 700px;
+  position: relative;
+  text-align: center;
+}
+
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 2rem;
+  color: #fff;
+  cursor: pointer;
+}
+
+.header-logo {
+  max-width: 200px;
+  height: auto;
+  margin-bottom: 15px;
+}
+
+.instructions-grid {
+  display: flex;
+  gap: 20px;
+  text-align: left;
+}
+
+.instruction-box {
+  flex: 1;
+}
+
+h3 {
+  color: #00bfff;
+  margin-top: 0;
+}
+
+ul {
+  padding-left: 20px;
+  color: #00d0ff;
+  line-height: 1.6;
+}
+
+a {
+  color: #09ff00;
+}
+
+/* Touch Control Containers */
+#touch-controls {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Single Sprite Sheet Setup for all Buttons */
+.t-btn, #joystick-base, #joystick-knob {
+  background-image: url('images/buttons.png');
+  background-repeat: no-repeat;
+  background-size: 500px 500px; 
+}
+
+/* Reset t-btn defaults */
+.t-btn {
+  pointer-events: auto;
+  position: absolute;
+  background-color: transparent;
+  border: none;
+  color: transparent;
+  border-radius: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+/* Joystick Setup */
+#joystick-container {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  width: 140px;
+  height: 140px;
+  pointer-events: auto;
+}
+
+#joystick-base {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  background-position: 0px 0px; 
+}
+
+#joystick-knob {
+  width: 60px;
+  height: 60px;
+  position: absolute;
+  top: calc(50% - 30px);
+  left: calc(50% - 30px);
+  transform: translate(0px, 0px);
+  pointer-events: none;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  background-position: -150px 0px; 
+}
+
+/* Action Button Container */
+#touch-actions {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 250px;
+  height: 250px;
+}
+
+/* Action Button Sprite Coordinates (Mapped directly to buttons.png) */
+.action-a { bottom: 10px; right: 10px; width: 60px; height: 60px; background-position: -0px -150px; }
+.action-b { bottom: 10px; right: 80px; width: 50px; height: 50px; background-position: -70px -150px; }
+.action-z { bottom: 80px; right: 10px; width: 50px; height: 50px; background-position: -130px -150px; }
+.action-r { top: 0px; right: 10px; width: 70px; height: 40px; background-position: -200px -150px; }
+.action-start { top: 0px; right: 90px; width: 70px; height: 35px; background-position: -280px -150px; }
+
+/* C-Button Sprite Coordinates */
+.action-c-u { bottom: 130px; right: 120px; width: 40px; height: 40px; background-position: -0px -220px; }
+.action-c-d { bottom: 50px; right: 120px; width: 40px; height: 40px; background-position: -50px -220px; }
+.action-c-l { bottom: 90px; right: 160px; width: 40px; height: 40px; background-position: -100px -220px; }
+.action-c-r { bottom: 90px; right: 80px; width: 40px; height: 40px; background-position: -150px -220px; }
+
+/* Styling for the Edit and Reset icons */
+.layout-icon {
+    position: absolute;
+    z-index: 9999;
+    width: 45px;
+    height: 45px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    pointer-events: auto;
+    touch-action: manipulation;
+}
+
+/* Pin them to the top right of the screen */
+#edit-layout-btn {
+    top: 20px;
+    right: 20px;
+}
+
+#reset-layout-btn {
+    top: 20px;
+    right: 75px; /* Sits exactly to the left of the pencil */
+}
+
+/* Dragging visuals for your game controls */
+.touch-button {
+    touch-action: none; /* Prevents screen scrolling on mobile while dragging */
+    position: absolute;
+    pointer-events: auto;
+}
+
+/* What the buttons look like while Edit Mode is active */
+body.edit-mode-active .touch-button {
+    border: 2px dashed rgba(255, 255, 255, 0.8) !important;
+    background-color: rgba(255, 255, 255, 0.4) !important;
+    cursor: grab;
+}
+
+body.edit-mode-active .touch-button:active {
+    cursor: grabbing;
+}
