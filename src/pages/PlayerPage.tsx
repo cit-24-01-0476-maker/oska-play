@@ -65,10 +65,10 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
     let isCancelled = false;
 
     const startRuntime = async () => {
-      if (game.id === 'nfs-most-wanted') {
+      if (game.id === 'nfs-most-wanted' || game.runtimeConfig?.embedUrl) {
         setIsLoaded(true);
         setLoadingPercent(100);
-        addLog('Loaded Self-Hosted Need for Speed: Most Wanted (2005) WebGPU Engine.');
+        addLog(`Loaded In-App PC Engine for ${game.title}.`);
         return;
       }
 
@@ -336,15 +336,67 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           </div>
         )}
 
-        {/* Execution Viewport: Authentic NFSMW WebGPU Engine (Self-hosted) or Doom/Canvas Adapter */}
+        {/* Execution Viewport: In-App Virtual Browser Tab (NFS Most Wanted / WASM Arcade / Canvas) */}
         {game.id === 'nfs-most-wanted' ? (
-          <iframe
-            src="/games/nfsmw/index.html"
-            allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; accelerometer; gyroscope"
-            allowFullScreen
-            className="w-full h-full min-h-[640px] border-0 rounded-xl bg-black"
-            title="Need for Speed: Most Wanted - Official WebGPU PC Port"
-          />
+          <div className="relative w-full h-full min-h-[640px] flex flex-col bg-black">
+            {/* Real In-App Virtual Browser Chrome Tab Bar */}
+            <div className="w-full h-10 bg-[#0c0e18] border-b border-[#1c2035] flex items-center justify-between px-3 text-xs shrink-0 select-none">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1 bg-[#141829] rounded-t-lg border-t border-x border-[#283050] text-slate-100 font-semibold text-[11px]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>{game.title}</span>
+                </div>
+              </div>
+              <div className="hidden sm:flex flex-1 max-w-md mx-4">
+                <div className="w-full flex items-center gap-2 px-3 py-1 bg-[#07080e] rounded-md border border-[#1b1f35] text-slate-400 font-mono text-[11px]">
+                  <span className="text-emerald-400 text-xs">🔒</span>
+                  <span className="truncate text-slate-300">oska://sandbox/pc-runtime/nfs-most-wanted</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-cyan-400 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/40 font-mono">
+                  ⚡ WebGPU Engine Active
+                </span>
+              </div>
+            </div>
+            <iframe
+              src="/games/nfsmw/index.html"
+              allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; accelerometer; gyroscope"
+              allowFullScreen
+              className="w-full flex-1 min-h-[600px] border-0 bg-black"
+              title="Need for Speed: Most Wanted - Official WebGPU PC Port"
+            />
+          </div>
+        ) : game.runtimeConfig?.embedUrl ? (
+          <div className="relative w-full h-full min-h-[640px] flex flex-col bg-black">
+            {/* Real In-App Virtual Browser Chrome Tab Bar */}
+            <div className="w-full h-10 bg-[#0c0e18] border-b border-[#1c2035] flex items-center justify-between px-3 text-xs shrink-0 select-none">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1 bg-[#141829] rounded-t-lg border-t border-x border-[#283050] text-slate-100 font-semibold text-[11px]">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                  <span>{game.title}</span>
+                </div>
+              </div>
+              <div className="hidden sm:flex flex-1 max-w-md mx-4">
+                <div className="w-full flex items-center gap-2 px-3 py-1 bg-[#07080e] rounded-md border border-[#1b1f35] text-slate-400 font-mono text-[11px]">
+                  <span className="text-cyan-400 text-xs">🌐</span>
+                  <span className="truncate text-slate-300">{game.runtimeConfig.embedUrl}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-violet-400 font-bold bg-violet-950/80 px-2 py-0.5 rounded border border-violet-800/40 font-mono">
+                  🎮 WASM Arcade WebPort
+                </span>
+              </div>
+            </div>
+            <iframe
+              src={game.runtimeConfig.embedUrl}
+              allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; accelerometer; gyroscope; clipboard-write"
+              allowFullScreen
+              className="w-full flex-1 min-h-[600px] border-0 bg-black"
+              title={`${game.title} - In-Page Web Port`}
+            />
+          </div>
         ) : (
           <canvas
             ref={canvasRef}

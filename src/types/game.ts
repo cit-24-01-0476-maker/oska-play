@@ -16,7 +16,7 @@ export type GameStatus =
   | 'ERROR'
   | 'UNPUBLISHED';
 
-export type RuntimeType = 'wasm-doom' | 'wasm-generic' | 'html5-canvas' | 'webgl-3d' | 'racer-3d' | 'native-only';
+export type RuntimeType = 'wasm-doom' | 'wasm-generic' | 'html5-canvas' | 'webgl-3d' | 'racer-3d' | 'native-only' | 'web-tab';
 
 export interface GameLicense {
   creator: string;
@@ -55,6 +55,7 @@ export interface GameRuntimeConfig {
   runtimeType: RuntimeType;
   entryPoint: string;
   wasmFile?: string;
+  embedUrl?: string;
   dataFiles?: string[];
   canvasWidth: number;
   canvasHeight: number;
@@ -72,7 +73,7 @@ export interface Game {
   title: string;
   tagline: string;
   description: string;
-  genre: 'Action' | 'Shooter' | 'Retro' | 'Puzzle' | 'Racing' | 'Adventure' | 'Strategy' | 'Indie';
+  genre: 'Action' | 'Shooter' | 'Retro' | 'Puzzle' | 'Racing' | 'Adventure' | 'Strategy' | 'Indie' | 'Open World' | 'Sandbox';
   compatibilityClass: GameCompatibilityClass;
   status: GameStatus;
   developer: string;
