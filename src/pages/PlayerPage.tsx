@@ -53,9 +53,6 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
 
   // Graphics preset
   const [renderScale, setRenderScale] = useState<'100%' | '75%' | '50%'>('100%');
-  const [nfsMode, setNfsMode] = useState<'webgpu' | 'canvas'>(
-    game.id === 'nfs-most-wanted' ? 'webgpu' : 'canvas'
-  );
 
   // Active runtime ref
   const runtimeRef = useRef<any>(null);
@@ -68,13 +65,6 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
     let isCancelled = false;
 
     const startRuntime = async () => {
-      if (game.id === 'nfs-most-wanted' && nfsMode === 'webgpu') {
-        setIsLoaded(true);
-        setLoadingPercent(100);
-        addLog('Loaded Need for Speed: Most Wanted WebGPU/WASM Port (dezm0n edition).');
-        return;
-      }
-
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -170,7 +160,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
         runtimeRef.current.stop();
       }
     };
-  }, [game, nfsMode]);
+  }, [game]);
 
   const handleToggleFullscreen = () => {
     if (!containerRef.current) return;
@@ -268,30 +258,21 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           )}
 
           {game.id === 'nfs-most-wanted' && (
-            <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#141624] border border-[#23283f]">
-              <button
-                onClick={() => {
-                  setNfsMode('webgpu');
-                  setIsLoaded(true);
-                }}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
-                  nfsMode === 'webgpu'
-                    ? 'bg-cyan-600 text-white shadow-xs'
-                    : 'text-slate-400 hover:text-white'
-                }`}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-950/70 border border-rose-500/40 text-[11px] text-rose-300 font-bold animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                <span>HEAT: x1 (PURSUIT)</span>
+              </div>
+              <a
+                href="https://dezm0n.itch.io/nfs-most-wanted-web-port"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gradient-to-r from-cyan-600/90 to-blue-600/90 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-[11px] border border-cyan-400/30 transition-all shadow-xs"
+                title="Launch official WebGPU port in an isolated top-level window without iframe restrictions"
               >
-                🎮 WebGPU Port (dezm0n)
-              </button>
-              <button
-                onClick={() => setNfsMode('canvas')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
-                  nfsMode === 'canvas'
-                    ? 'bg-violet-600 text-white shadow-xs'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                ⚡ 3D Street Circuit
-              </button>
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>dezm0n WebGPU Port</span>
+              </a>
             </div>
           )}
 
@@ -358,50 +339,16 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           </div>
         )}
 
-        {/* Execution Viewport: Authentic WebGPU Port or Built-in Canvas Engine */}
-        {game.id === 'nfs-most-wanted' && nfsMode === 'webgpu' ? (
-          <div className="relative w-full h-full min-h-[600px] bg-black flex flex-col">
-            <div className="w-full bg-[#0c0e18] border-b border-[#1c1f2e] px-4 py-2 flex items-center justify-between text-xs shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="font-bold text-white text-[11px] sm:text-xs">Need for Speed: Most Wanted WebGPU</span>
-                <span className="text-slate-600 hidden sm:inline">•</span>
-                <span className="text-slate-400 text-[10px] sm:text-[11px]">
-                  Click <strong>&quot;Играть здесь (Play here)&quot;</strong> then <strong>&quot;Start game&quot;</strong>
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <a
-                  href="https://dezm0n.itch.io/nfs-most-wanted-web-port"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold text-[11px] transition-colors"
-                  title="Open isolated full-screen window"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Popout Window</span>
-                </a>
-              </div>
-            </div>
-            <iframe
-              src="https://html.itch.zone/html/19661955-2192936/index.html?v=1792754056"
-              allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; focus-without-user-activation *; accelerometer; gyroscope"
-              allowFullScreen
-              className="w-full flex-1 min-h-[580px] border-0 bg-black"
-              title="Need for Speed: Most Wanted Black Edition Web Port"
-            />
-          </div>
-        ) : (
-          <canvas
-            ref={canvasRef}
-            id="game-canvas"
-            tabIndex={0}
-            className={`max-w-full max-h-full object-contain cursor-crosshair focus:outline-hidden transition-all duration-200 ${
-              renderScale === '75%' ? 'scale-75' : renderScale === '50%' ? 'scale-50' : 'scale-100'
-            }`}
-            style={{ imageRendering: 'pixelated' }}
-          />
-        )}
+        {/* Execution Viewport: 100% Client-Side Canvas Engine (Zero iframe errors) */}
+        <canvas
+          ref={canvasRef}
+          id="game-canvas"
+          tabIndex={0}
+          className={`max-w-full max-h-full object-contain cursor-crosshair focus:outline-hidden transition-all duration-200 ${
+            renderScale === '75%' ? 'scale-75' : renderScale === '50%' ? 'scale-50' : 'scale-100'
+          }`}
+          style={{ imageRendering: 'pixelated' }}
+        />
 
         {/* Scanlines / CRT Overlay */}
         {crtEffect && <div className="absolute inset-0 crt-overlay pointer-events-none z-10" />}

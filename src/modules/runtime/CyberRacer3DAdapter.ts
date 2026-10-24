@@ -22,6 +22,7 @@ interface TrafficCar {
   z: number;
   speed: number;
   color: string;
+  isPolice?: boolean;
 }
 
 export class CyberRacer3DAdapter {
@@ -136,15 +137,17 @@ export class CyberRacer3DAdapter {
       });
     }
 
-    // Add traffic cars
+    // Add traffic cars and Rockport Police Interceptors
     for (let i = 0; i < 40; i++) {
       const segIndex = 80 + i * 35;
       if (this.segments[segIndex]) {
+        const isPolice = i % 4 === 0;
         this.segments[segIndex].cars.push({
           offset: (Math.random() * 1.4) - 0.7,
           z: segIndex * this.segmentLength,
-          speed: 3000 + Math.random() * 4000,
-          color: ['#06b6d4', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'][i % 5],
+          speed: isPolice ? 5500 + Math.random() * 2000 : 3000 + Math.random() * 4000,
+          color: isPolice ? '#0f172a' : ['#06b6d4', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'][i % 5],
+          isPolice,
         });
       }
     }
@@ -449,6 +452,19 @@ export class CyberRacer3DAdapter {
         ctx.roundRect(carX - carW / 2, carY - carH, carW, carH, 4);
         ctx.fill();
 
+        if (car.isPolice) {
+          // Police white side door panels
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(carX - carW * 0.35, carY - carH * 0.8, carW * 0.7, carH * 0.4);
+
+          // Flashing Police Siren Lightbar (Red & Blue)
+          const flash = Math.floor(Date.now() / 120) % 2 === 0;
+          ctx.fillStyle = flash ? '#ef4444' : '#3b82f6';
+          ctx.fillRect(carX - carW * 0.25, carY - carH - 8 * carScale * (w / 2), carW * 0.22, 6 * carScale * (w / 2) + 2);
+          ctx.fillStyle = flash ? '#3b82f6' : '#ef4444';
+          ctx.fillRect(carX + carW * 0.03, carY - carH - 8 * carScale * (w / 2), carW * 0.22, 6 * carScale * (w / 2) + 2);
+        }
+
         // Taillights
         ctx.fillStyle = '#ef4444';
         ctx.fillRect(carX - carW * 0.4, carY - carH * 0.5, carW * 0.25, carH * 0.25);
@@ -456,6 +472,21 @@ export class CyberRacer3DAdapter {
       }
 
       maxY = segment.p1.screen.y;
+    }
+
+    // Nitro high-speed motion blur lines
+    if (this.nitroActive && this.speed > 8000) {
+      ctx.strokeStyle = 'rgba(6, 182, 212, 0.35)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 16; i++) {
+        const lx = Math.random() * w;
+        const ly = (h / 2) + Math.random() * (h / 2);
+        const len = 30 + Math.random() * 60;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly);
+        ctx.lineTo(lx + (Math.random() - 0.5) * 10, ly + len);
+        ctx.stroke();
+      }
     }
 
     // Draw Player's Supercar
