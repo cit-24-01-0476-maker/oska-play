@@ -347,7 +347,16 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
             </div>
             <span className="text-slate-600 select-none">|</span>
             <span className="text-slate-500 truncate">
-              https://oska-play.internal/runtime/<span className="text-cyan-300 font-semibold">{game.slug}.wasm</span>
+              {embedSource?.startsWith('http') ? (
+                <>
+                  <span className="text-emerald-400 font-semibold">{embedSource.replace('https://', '').replace(/\/$/, '')}</span>
+                  <span className="text-slate-500"> (Live Web Stream)</span>
+                </>
+              ) : (
+                <>
+                  https://oska-play.internal/runtime/<span className="text-cyan-300 font-semibold">{game.slug}.wasm</span>
+                </>
+              )}
             </span>
           </div>
 
@@ -387,6 +396,19 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           >
             <HelpCircle className="w-4 h-4" />
           </button>
+
+          {embedSource && (
+            <a
+              href={embedSource}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-md bg-[#141724] hover:bg-[#1f2235] text-slate-300 hover:text-white border border-[#21263d] transition-all text-xs font-mono"
+              title="Open direct live URL in standalone tab if browser blocks WebGPU"
+            >
+              <ExternalLink className="w-3 h-3 text-cyan-400" />
+              <span className="text-[11px]">Real Link</span>
+            </a>
+          )}
         </div>
       </div>
 
@@ -490,8 +512,6 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
                   e.currentTarget.focus();
                 } catch {}
               }}
-              {...({ credentialless: 'true' } as any)}
-              sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-downloads"
               allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; accelerometer; gyroscope; clipboard-write; keyboard-map"
               referrerPolicy="no-referrer"
               className="w-full flex-1 min-h-[600px] border-0 bg-black"
