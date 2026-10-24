@@ -1,0 +1,50 @@
+[
+  {
+    "id": "nfsmw",
+    "title": "Need for Speed: Most Wanted",
+    "executable": "speed.exe",
+    "sha256": "80774c2e5d619b4f120b48d4462896fd504c263399d203a238769cffde1d253c",
+    "requiredDirs": [
+      "CARS",
+      "FRONTEND",
+      "GLOBAL",
+      "SOUND",
+      "TRACKS"
+    ],
+    "exclude": [
+      "Uninstall",
+      "Support",
+      "scripts",
+      "SAVE",
+      "foobar",
+      "*.dll",
+      "*_inst.exe",
+      "*.txt",
+      "server.cfg"
+    ],
+    "store": "",
+    "installNames": [
+      "Need for Speed Most Wanted",
+      "NFS Most Wanted",
+      "Most Wanted"
+    ],
+    "minFreeMb": 300,
+    "streamAssets": true,
+    "controls": {
+      "pad": "native"
+    },
+    "webDefaults": {
+      "RECOMP_WEB_DEFAULTS": "1",
+      "RECOMP_NFSMW_GRAPHICS": "1"
+    },
+    "webSavedOverrides": {
+      "RECOMP_NFSMW_GRAPHICS": "0"
+    },
+    "webRegistryPreferences": [
+      "g_PerformanceLevel",
+      "g_RacingResolution"
+    ],
+    "hostedAssets": "./nfsmw/assets.json?v=16af54b079f739ab",
+    "assetBase": "https://cdn.justplayweb.com/nfsmw-pc13-20261010"
+  }
+]

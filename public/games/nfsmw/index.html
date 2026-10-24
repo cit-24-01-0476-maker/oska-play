@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Need for Speed: Most Wanted</title>
+  <link rel="stylesheet" href="ui/player.css">
+  <script type="module" src="ui/player.mjs"></script>
+</head>
+<body data-runtime="nfsmw/runtime.html">
+  <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="folder" viewBox="0 0 24 24"><path d="M3 7V4h6l2 3h10v3M3 10h19l-3 10H2z"/></symbol>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+    <symbol id="monitor" viewBox="0 0 24 24"><path d="M2 3h20v14H2zm10 14v4m-5 0h10"/></symbol>
+    <symbol id="gpu" viewBox="0 0 24 24"><path d="M2 5h19v13H2zm3 13v3m4-3v3m4-3v3m4-3v3M21 9h2m-2 5h2"/><circle cx="8" cy="11.5" r="2.5"/><circle cx="16" cy="11.5" r="2.5"/></symbol>
+    <symbol id="warning" viewBox="0 0 24 24"><path d="m12 3 10 18H2zM12 9v5m0 3v.1"/></symbol>
+    <symbol id="gear" viewBox="0 0 24 24"><path d="m10 2 4 0 .7 3 2.3 1 2.6-1.6 2 3.4-2 2 .2 2.6 2.2 2-2 3.5-2.8-1-2.2 1-.6 3.1h-4l-.7-3-2.3-1-2.6 1.6-2-3.4 2-2-.2-2.6-2.2-2 2-3.5 2.8 1 2.2-1z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="pad" viewBox="0 0 24 24"><path d="M8 6h8c2 0 3 1 4 4l2 8c.5 2-2 3-3 1l-3-4H8l-3 4c-1 2-3.5 1-3-1l2-8c1-3 2-4 4-4zM6 10v4m-2-2h4"/><circle cx="16" cy="10" r=".5"/><circle cx="18" cy="12" r=".5"/></symbol>
+    <symbol id="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20M4 6h16M4 18h16"/></symbol>
+    <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  </svg>
+  <header>
+    <strong class="brand">Need for Speed <span>Most Wanted</span></strong>
+    <nav aria-label="Game menu">
+      <a class="files" href="library.html"><svg class="icon"><use href="#folder"/></svg><span>Files & saves</span></a>
+      <button id="fullscreen" class="secondary" hidden>Full screen</button>
+      <button id="stop" class="secondary" hidden>Stop game</button>
+    </nav>
+  </header>
+  <main>
+    <section id="welcome" aria-labelledby="launch-title">
+      <div class="hero">
+        <div class="launch-copy">
+          <h1 id="launch-title">Become the<br>Most Wanted.</h1>
+          <p class="intro">Rockport. The Blacklist. Relentless pursuits.</p>
+          <p class="description">Game files load automatically.<br>Progress is saved in this browser.</p>
+          <button class="primary" id="start">Start game<svg class="icon"><use href="#arrow"/></svg></button>
+          <p id="message" role="status" aria-live="polite"></p>
+          <div class="defaults">
+            <svg class="icon"><use href="#monitor"/></svg>
+            <div>
+              <label for="resolution">Resolution</label>
+              <select id="resolution"></select>
+              <span>Opens full screen. “Game setting” uses Options → Video (default: maximum graphics, 1920×1080).</span>
+            </div>
+          </div>
+          <div class="gpu-section">
+            <p class="gpu-name"><svg class="icon"><use href="#gpu"/></svg><span id="gpu-name">Checking graphics card…</span></p>
+            <p id="gpu-warning" class="gpu-warning" hidden><svg class="icon"><use href="#warning"/></svg><span></span></p>
+            <button class="secondary gpu-help" id="gpu-help" hidden><svg class="icon"><use href="#gear"/></svg>Low FPS? Set up GPU</button>
+          </div>
+        </div>
+        <img class="poster" src="ui/nfsmw-poster.jpg" width="1356" height="1920" alt="Original Need for Speed: Most Wanted poster with the BMW M3 GTR">
+      </div>
+      <footer>
+        <span><svg class="icon"><use href="#pad"/></svg>Keyboard and gamepad</span>
+        <span><svg class="icon"><use href="#globe"/></svg>Game language: English</span>
+      </footer>
+    </section>
+    <section id="running" aria-label="Game" hidden>
+      <div id="stage"><p id="web-credit" hidden>WebPort by dezm0n</p></div>
+      <p id="input-hints" role="status" aria-live="polite"></p>
+      <p id="graphics-info" role="status"></p>
+    </section>
+  </main>
+  <dialog id="gpu-dialog" aria-labelledby="gpu-title">
+    <button class="dialog-close" aria-label="Close"><svg class="icon"><use href="#close"/></svg></button>
+    <h2 id="gpu-title">Launch on a dedicated GPU</h2>
+    <p>On laptops, Chrome may select integrated graphics. The page requests high performance, but the browser and Windows make the final choice.</p>
+    <ol>
+      <li>Fully close Chrome, including background processes.</li>
+      <li>Press <kbd>Win</kbd> + <kbd>R</kbd> and run:<code>chrome.exe --force_high_performance_gpu</code></li>
+      <li>Open the game page on itch again.</li>
+    </ol>
+    <p>For every launch: in the Chrome shortcut properties, add <code class="inline">--force_high_performance_gpu</code> after the path to chrome.exe in the Target field.</p>
+    <p class="dialog-note">Chrome opens in your usual profile, with your existing saves. A new window of an already running Chrome will not apply this flag. If FPS is still low, reduce graphics or resolution in Options → Video — your choices are saved.</p>
+  </dialog>
+</body>
+</html>

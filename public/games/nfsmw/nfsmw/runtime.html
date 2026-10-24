@@ -1,0 +1,369 @@
+<!doctype html>
+<!-- The player page for one game's web build. tools/web_launcher.py places it,
+     with SpeedRecomp.js/.wasm/.data, in <launcher>/<game id>/; the game's files were
+     imported by the launcher into the browser's private storage at
+     <game id>/game, and the profile lives at <game id>/profile. The page must
+     be served cross-origin isolated (COOP same-origin, COEP require-corp). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Need for Speed: Most Wanted</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #ddd; font: 14px system-ui, sans-serif; overflow: hidden; }
+  #canvas { display: block; width: 100vw; height: 100vh; outline: none; }
+  #status { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+            text-align: center; padding: 0 16px; white-space: pre-line; pointer-events: none; }
+  #status a { pointer-events: auto; color: #8cf; }
+  #outage { position: fixed; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center;
+            padding: 16px; background: rgb(0 0 0 / 0.8); }
+  #outage[hidden] { display: none; }
+  #outage section { box-sizing: border-box; width: min(460px, 100%); padding: 24px 28px; border: 1px solid #3a3a3a;
+                    border-radius: 10px; background: #141414; line-height: 1.5; }
+  #outage h2 { margin: 0 0 10px; color: #fff; font-size: 19px; }
+  #outage p { margin: 8px 0 0; }
+  #outage .when { color: #ffcf5a; font-weight: 600; }
+  #outage .when:empty { display: none; }
+  #outage .kept { color: #999; font-size: 13px; }
+  #loading { position: fixed; left: 12px; bottom: 8px; margin: 0; font: 12px/1 system-ui, sans-serif;
+             color: #fff; opacity: .75; text-shadow: 0 1px 3px #000; pointer-events: none; }
+  #loading[hidden] { display: none; }
+  #loading i { display: block; width: 160px; height: 3px; margin-top: 5px; border-radius: 2px;
+               background: rgb(255 255 255 / 0.2); overflow: hidden; }
+  #loading b { display: block; height: 100%; width: 0; background: #fff; transition: width .2s; }
+</style>
+</head>
+<body>
+<canvas id="canvas" tabindex="-1"></canvas>
+<div id="status">Loading…</div>
+<p id="loading" hidden><span>Loading…</span><i><b></b></i></p>
+<div id="outage" role="alert" hidden>
+  <section><h2></h2><p class="why"></p><p class="when"></p><p class="kept"></p></section>
+</div>
+<script>
+"use strict";
+const statusEl = document.getElementById("status");
+const canvas = document.getElementById("canvas");
+let stopped = false;
+let graphicsDevice = null;
+const workers = new Set();
+const NativeWorker = window.Worker;
+// Own every startup/pthread worker, including the pool that never entered main.
+window.Worker = class extends NativeWorker {
+  constructor(url, options) {
+    if (stopped) throw new DOMException("Game stopped", "AbortError");
+    super(url, options);
+    workers.add(this);
+  }
+  terminate() {
+    workers.delete(this);
+    super.terminate();
+  }
+};
+// The player calls this before removing the iframe. Do not wait for GC to
+// release a device's textures/buffers, or audio's shared Wasm memory.
+function stopRuntime() {
+  if (stopped) return;
+  stopped = true;
+  for (const worker of workers) worker.terminate();
+  workers.clear();
+  const audio = window.Module?.recompAudio;
+  if (audio) {
+    Atomics.store(audio.control, 10, 1); // AudioRing::Stopped
+    Atomics.store(audio.control, 2, 0); // AudioRing::Enabled
+    audio.node?.disconnect();
+    audio.context.close().catch(() => {});
+  }
+  graphicsDevice?.destroy();
+  graphicsDevice = null;
+}
+window.recompStop = stopRuntime;
+window.addEventListener("pagehide", stopRuntime);
+function checkRunning() {
+  if (stopped) throw new DOMException("Game stopped", "AbortError");
+}
+function status(text, back) {
+  if (stopped) return;
+  statusEl.textContent = text;
+  if (back) {
+    const a = document.createElement("a");
+    a.href = "../index.html";
+    a.textContent = "\nBack to the launcher";
+    statusEl.append(document.createElement("br"), a);
+  }
+  statusEl.hidden = !text;
+}
+// The streamed file backend and the download worker report a file server that
+// keeps failing on this channel. Tell the player whether their own connection
+// or the server is down, and when a daily hosting quota resets.
+const outageEl = document.getElementById("outage");
+let outageTimer = 0;
+function untilUtcMidnight(now = new Date()) {
+  const reset = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  const minutes = Math.max(1, Math.ceil((reset - now) / 60000));
+  const wait = minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
+  const local = reset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return `It resets at 00:00 UTC (${local} your time), in about ${wait}. Please come back then.`;
+}
+async function showOutage() {
+  if (!outageEl.hidden) return;
+  outageEl.hidden = false;
+  const [title, why, when, kept] = outageEl.querySelectorAll("h2, p");
+  clearInterval(outageTimer);
+  when.textContent = kept.textContent = "";
+  title.textContent = "Game files are unavailable";
+  why.textContent = "Checking your connection…";
+  const online = navigator.onLine && await fetch("../games.json", { method: "HEAD", cache: "no-store" })
+    .then((r) => r.ok, () => false);
+  const quota = online && window.recompGame?.assetQuota === "daily-utc";
+  if (!online) {
+    title.textContent = "No internet connection";
+    why.textContent = "The game loads its files from the internet while you play, and the connection was lost.";
+  } else if (quota) {
+    title.textContent = "Come back tomorrow";
+    why.textContent = "The game's free file server has reached its daily request limit, so it can't send game files right now.";
+  } else {
+    why.textContent = "The game's file server isn't responding.";
+    when.textContent = "Please try again later.";
+  }
+  kept.textContent = `Your saves and downloaded files are kept. Choose Stop game, then Start game ${online ? "later" : "once you are back online"}.`;
+  if (quota) {
+    when.textContent = untilUtcMidnight();
+    outageTimer = setInterval(() => { when.textContent = untilUtcMidnight(); }, 30000);
+  }
+}
+window.recompShowOutage = showOutage; // for tests
+const streamChannel = new BroadcastChannel("recomp-stream");
+// Game files on the way show a small loading mark instead of a black screen.
+// It stays a second after the last request, covering back-to-back reads.
+const loadingEl = document.getElementById("loading");
+let loadingTimer = 0;
+streamChannel.onmessage = ({ data }) => {
+  if (data?.type === "unavailable") showOutage();
+  if (data?.type !== "loading") return;
+  clearTimeout(loadingTimer);
+  if (!data.busy) {
+    loadingTimer = setTimeout(() => { loadingEl.hidden = true; }, 1000);
+    return;
+  }
+  loadingEl.hidden = stopped;
+  const mb = (n) => (n / 1024 ** 2).toFixed(1);
+  const [text, bar] = loadingEl.querySelectorAll("span, b");
+  text.textContent = data.total ? `Loading… ${mb(data.done)} / ${mb(data.total)} MB` : "Loading…";
+  bar.style.width = data.total ? `${Math.min(100, data.done / data.total * 100)}%` : "0";
+};
+// An uncaught exception in a game thread (Emscripten rethrows the worker's
+// ErrorEvent) or a Wasm trap stops the game with a message, never leaving a
+// frozen black canvas.
+window.addEventListener("error", (e) => {
+  const error = e.error;
+  if (stopped || !(error instanceof ErrorEvent || error instanceof WebAssembly.RuntimeError)) return;
+  const message = error.message || e.message || "unknown error";
+  record(`Game error: ${message}`);
+  loadingEl.hidden = true;
+  status(`The game stopped because of an error:\n${message}`, true);
+  stopRuntime();
+});
+
+const log = [];
+window.recompLog = log; // for tests
+// Keep diagnostics bounded during long runs; the browser console need not
+// retain every line emitted by translated code.
+function record(text) {
+  const size = text.match(/d3d9: (?:CreateDevice|Reset to) (\d+)x(\d+)/);
+  if (size) {
+    parent.postMessage({ type: "recomp-display-size", width: +size[1], height: +size[2] }, location.origin);
+    if (statusEl.textContent === "Starting game…") status("");
+  }
+  if (text.includes("[host] could not prepare streamed game files"))
+    status("Game data could not be prepared. Stop and choose Start game to retry.");
+  log.push(text);
+  if (log.length > 1000) log.splice(0, log.length - 1000);
+}
+
+// Opt-in crash diagnostics execute inside pthread workers, where an ErrorEvent
+// still carries the Wasm stack. The parent normally receives only its message.
+if (new URLSearchParams(location.search).get("RECOMP_WEB_DIAGNOSTICS") === "1") {
+  const OriginalWorker = window.Worker;
+  window.Worker = class extends OriginalWorker {
+    constructor(url, options) {
+      const source = new URL(url, location.href);
+      if (source.pathname.endsWith("/SpeedRecomp.js") && options?.type !== "module") {
+        const prelude = `self.addEventListener("error", e => self.postMessage({
+          recompWorkerError: true, message: e.message, stack: e.error?.stack || ""
+        })); importScripts(${JSON.stringify(source.href)});`;
+        const bootstrap = URL.createObjectURL(new Blob([prelude], { type: "text/javascript" }));
+        super(bootstrap, options);
+        this.addEventListener("message", e => {
+          if (!e.data?.recompWorkerError) return;
+          e.stopImmediatePropagation();
+          record(`Worker exception: ${e.data.message}\n${e.data.stack}`);
+        });
+        // Worker construction has already fetched its bootstrap URL.
+        this.addEventListener("message", () => URL.revokeObjectURL(bootstrap), { once: true });
+      } else {
+        super(url, options);
+      }
+    }
+  };
+}
+
+async function gameId() {
+  // The id is the page's folder: Cloudflare serves runtime.html as /runtime, so the file name can't be trusted.
+  const parts = new URL(".", location.href).pathname.split("/").filter(Boolean);
+  return decodeURIComponent(parts[parts.length - 1] || "");
+}
+
+async function prepareGame(game) {
+  const worker = new Worker("../worker.js", { type: "module" });
+  let nextId = 0;
+  const pending = new Map();
+  worker.onmessage = ({ data }) => {
+    if (data.progress) {
+      const p = data.progress;
+      const percent = p.bytesTotal ? Math.floor(p.bytesDone / p.bytesTotal * 100) : 0;
+      status(`Downloading game · ${percent}%\n${data.startup ? `${(p.bytesDone / 1024 ** 2).toFixed(1)} of ${(p.bytesTotal / 1024 ** 2).toFixed(1)} MB` : `${(p.bytesDone / 1024 ** 3).toFixed(2)} of ${(p.bytesTotal / 1024 ** 3).toFixed(2)} GB`}\n${data.startup ? "Other game files load as they are needed." : "Your next visit will use the cached files."}`);
+      return;
+    }
+    const request = pending.get(data.id);
+    if (!request) return;
+    pending.delete(data.id);
+    if (data.error) request.reject(new Error(data.error));
+    else request.resolve(data.result);
+  };
+  worker.onerror = () => {
+    for (const request of pending.values()) request.reject(new Error("Game files could not be loaded. Try Start again."));
+    pending.clear();
+  };
+  const request = (cmd, extra = {}) => new Promise((resolve, reject) => {
+    const id = ++nextId;
+    pending.set(id, { resolve, reject });
+    worker.postMessage({ id, cmd, game, ...extra });
+  });
+  try {
+    status("Checking game files…");
+    const cached = await request("status");
+    if (cached.status.state === "ready") return false;
+    if (!game.hostedAssets) throw new Error(`${game.title} has not been imported yet.`);
+    status("Preparing your first play…\nDownloading game files automatically.");
+    const manifestUrl = new URL(game.hostedAssets, new URL("../games.json", location.href)).href;
+    const streamed = game.streamAssets && game.assetBase;
+    const outcome = await request(streamed ? "streamSetup" : "import", { kind: "hosted", manifestUrl });
+    if (outcome.result === "noSpace") throw new Error("There isn't enough browser storage for this game.");
+    if (outcome.result !== "done") throw new Error(outcome.error || "Game download did not finish. Stop and try Start again to resume.");
+    return !!streamed;
+  } finally {
+    worker.terminate();
+  }
+}
+
+async function start() {
+  if (window.parent === window) throw new Error("Open the player page and choose Start game.");
+  if (!crossOriginIsolated) throw new Error("This page must be served cross-origin isolated (COOP/COEP headers).");
+  if (!navigator.gpu) throw new Error("This browser has no WebGPU.");
+  const id = await gameId();
+  const games = await fetch("../games.json").then((r) => r.json());
+  const game = games.find((g) => g.id === id);
+  if (!game) throw new Error(`No game "${id}" in the launcher's games.json.`);
+  document.title = game.title;
+  window.recompGame = game;
+
+  // Hosted games populate OPFS automatically; existing imported copies work too.
+  const streamed = await prepareGame(game);
+  checkRunning();
+  const { preparePresentation } = await import("../ui/launch-settings.mjs");
+  await preparePresentation(id, new URLSearchParams(location.search).get("res"));
+  const { browserDefaults, browserBindings } = await import("./profile-settings.js");
+  const bindings = await browserBindings(id);
+  checkRunning();
+  window.recompBindings = { ...game.controls };
+  for (const entry of bindings.split(";")) {
+    const equals = entry.indexOf("=");
+    if (equals > 0) window.recompBindings[entry.slice(0, equals)] = entry.slice(equals + 1);
+  }
+  const defaults = await browserDefaults(id, game.webDefaults || {},
+    game.webSavedOverrides || {}, game.webRegistryPreferences || []);
+  checkRunning();
+  status("Starting game…");
+
+  const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
+  checkRunning();
+  if (!adapter) throw new Error("WebGPU gave no adapter.");
+  const info = adapter.info;
+  const gpuName = [info?.vendor, info?.architecture, info?.description].filter(Boolean).join(" · ") || "WebGPU";
+  parent.postMessage({ type: "recomp-gpu-info", text: gpuName, info: {
+    vendor: info?.vendor, architecture: info?.architecture, description: info?.description,
+    device: info?.device, isFallbackAdapter: adapter.isFallbackAdapter || info?.isFallbackAdapter
+  } }, location.origin);
+  record(`WebGPU adapter: ${gpuName} (requested high-performance)`);
+  const wanted = ["texture-compression-bc", "depth32float-stencil8", "float32-filterable",
+                  "unorm16-texture-formats", "rg11b10ufloat-renderable"];
+  const requiredFeatures = wanted.filter((f) => adapter.features.has(f));
+  const requiredLimits = {};
+  for (const k of ["maxTextureDimension2D", "maxBufferSize", "maxStorageBufferBindingSize",
+                   "maxUniformBufferBindingSize", "maxBindGroups", "maxSampledTexturesPerShaderStage",
+                   "maxSamplersPerShaderStage", "maxStorageBuffersPerShaderStage",
+                   "maxUniformBuffersPerShaderStage", "maxDynamicUniformBuffersPerPipelineLayout",
+                   "maxVertexBuffers", "maxVertexAttributes", "maxColorAttachments",
+                   "maxInterStageShaderVariables"])
+    if (k in adapter.limits) requiredLimits[k] = adapter.limits[k];
+  const device = await adapter.requestDevice({ requiredFeatures, requiredLimits });
+  // An adapter/device request cannot be cancelled. A late result must never
+  // revive an unloaded session or leave a newly allocated device alive.
+  if (stopped) { device.destroy(); return; }
+  graphicsDevice = device;
+  device.lost.then((info) => status(`The graphics device was lost: ${info.message}`, true));
+  device.addEventListener("uncapturederror", (e) => console.error("WebGPU:", e.error.message));
+
+  const exe = `/opfs/${id}/game/${game.executable}`;
+  const Module = {
+    canvas,
+    preinitializedWebGPUDevice: device,
+    noInitialRun: true,
+    print: record,
+    printErr: record,
+    // Emscripten clears its status once the build loads; keep "Starting game…"
+    // on screen until the game creates its display.
+    setStatus: (t) => status(t || "Starting game…"),
+    onAbort: (what) => { status(`The game stopped: ${what}`, true); stopRuntime(); },
+    onExit: stopRuntime,
+    preRun: [() => {
+      const m = Module;
+      m.ENV.RECOMP_PROFILE_DIR = `/opfs/${id}/profile`;
+      m.ENV.RECOMP_COOPERATIVE_FILE_READS = "1";
+      // Keep the original in-game resolution selector authoritative. Automatic
+      // drawable supersampling otherwise cancels a lower resolution choice.
+      m.ENV.RECOMP_D3D9_SCALE = "1";
+      Object.assign(m.ENV, defaults);
+      if (bindings) m.ENV.RECOMP_CONTROLS_MAPPED = bindings;
+      if (streamed) {
+        m.ENV.RECOMP_WEB_ASSET_BASE = new URL(game.assetBase, location.href).href;
+        m.ENV.RECOMP_WEB_ASSET_INDEX = `/opfs/${id}/game/.stream-index`;
+      }
+      const extra = new URLSearchParams(location.search);
+      for (const [k, v] of extra) if (k.startsWith("RECOMP_")) m.ENV[k] = v;
+    }],
+    onRuntimeInitialized() {
+      if (stopped) return;
+      canvas.focus();
+      Module.callMain([`--exe=${exe}`]);
+    },
+  };
+  window.Module = Module;
+  const script = document.createElement("script");
+  script.src = "SpeedRecomp.js";
+  script.onerror = () => status("The game's web build is missing.", true);
+  document.body.append(script);
+}
+
+canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+canvas.addEventListener("click", () => canvas.focus());
+start().catch((e) => { status(e.message === "Failed to fetch" ? "A download failed. Choose Stop game, then Start game to retry. Your saves are kept." : e.message, true); stopRuntime(); });
+</script>
+<script type="module">
+import { startInputHints } from "./input-hints.js";
+startInputHints(text => parent.postMessage({ type: "recomp-input-hints", text }, location.origin),
+  undefined, () => window.recompBindings || window.recompGame?.controls);
+</script>
+</body>
+</html>

@@ -65,6 +65,13 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
     let isCancelled = false;
 
     const startRuntime = async () => {
+      if (game.id === 'nfs-most-wanted') {
+        setIsLoaded(true);
+        setLoadingPercent(100);
+        addLog('Loaded Self-Hosted Need for Speed: Most Wanted (2005) WebGPU Engine.');
+        return;
+      }
+
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -259,20 +266,10 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
 
           {game.id === 'nfs-most-wanted' && (
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-950/70 border border-rose-500/40 text-[11px] text-rose-300 font-bold animate-pulse">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                <span>HEAT: x1 (PURSUIT)</span>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-950/70 border border-cyan-500/40 text-[11px] text-cyan-300 font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                <span>WebGPU Native Engine (Local Sandbox)</span>
               </div>
-              <a
-                href="https://dezm0n.itch.io/nfs-most-wanted-web-port"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gradient-to-r from-cyan-600/90 to-blue-600/90 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-[11px] border border-cyan-400/30 transition-all shadow-xs"
-                title="Launch official WebGPU port in an isolated top-level window without iframe restrictions"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>dezm0n WebGPU Port</span>
-              </a>
             </div>
           )}
 
@@ -339,16 +336,26 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           </div>
         )}
 
-        {/* Execution Viewport: 100% Client-Side Canvas Engine (Zero iframe errors) */}
-        <canvas
-          ref={canvasRef}
-          id="game-canvas"
-          tabIndex={0}
-          className={`max-w-full max-h-full object-contain cursor-crosshair focus:outline-hidden transition-all duration-200 ${
-            renderScale === '75%' ? 'scale-75' : renderScale === '50%' ? 'scale-50' : 'scale-100'
-          }`}
-          style={{ imageRendering: 'pixelated' }}
-        />
+        {/* Execution Viewport: Authentic NFSMW WebGPU Engine (Self-hosted) or Doom/Canvas Adapter */}
+        {game.id === 'nfs-most-wanted' ? (
+          <iframe
+            src="/games/nfsmw/index.html"
+            allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; accelerometer; gyroscope"
+            allowFullScreen
+            className="w-full h-full min-h-[640px] border-0 rounded-xl bg-black"
+            title="Need for Speed: Most Wanted - Official WebGPU PC Port"
+          />
+        ) : (
+          <canvas
+            ref={canvasRef}
+            id="game-canvas"
+            tabIndex={0}
+            className={`max-w-full max-h-full object-contain cursor-crosshair focus:outline-hidden transition-all duration-200 ${
+              renderScale === '75%' ? 'scale-75' : renderScale === '50%' ? 'scale-50' : 'scale-100'
+            }`}
+            style={{ imageRendering: 'pixelated' }}
+          />
+        )}
 
         {/* Scanlines / CRT Overlay */}
         {crtEffect && <div className="absolute inset-0 crt-overlay pointer-events-none z-10" />}
