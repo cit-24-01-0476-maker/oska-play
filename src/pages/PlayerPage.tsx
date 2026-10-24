@@ -19,6 +19,7 @@ import {
   Gamepad2,
   Zap,
   HelpCircle,
+  ExternalLink,
 } from 'lucide-react';
 
 interface PlayerPageProps {
@@ -52,7 +53,9 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
 
   // Graphics preset
   const [renderScale, setRenderScale] = useState<'100%' | '75%' | '50%'>('100%');
-  const [nfsMode, setNfsMode] = useState<'webgpu' | 'canvas'>('canvas');
+  const [nfsMode, setNfsMode] = useState<'webgpu' | 'canvas'>(
+    game.id === 'nfs-most-wanted' ? 'webgpu' : 'canvas'
+  );
 
   // Active runtime ref
   const runtimeRef = useRef<any>(null);
@@ -355,43 +358,38 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           </div>
         )}
 
-        {/* Execution Viewport: WebGPU Port Launcher or Local Canvas Engine */}
+        {/* Execution Viewport: Authentic WebGPU Port or Built-in Canvas Engine */}
         {game.id === 'nfs-most-wanted' && nfsMode === 'webgpu' ? (
-          <div className="relative w-full h-full min-h-[540px] bg-[#0c0e18] flex flex-col items-center justify-center p-8 text-center animate-in fade-in">
-            <div className="max-w-md p-6 rounded-2xl bg-[#141726] border border-cyan-500/30 shadow-2xl space-y-4">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-cyan-600 to-indigo-600 p-[2px]">
-                <div className="w-full h-full bg-[#0d0f19] rounded-[14px] flex items-center justify-center">
-                  <Gamepad2 className="w-7 h-7 text-cyan-400" />
-                </div>
+          <div className="relative w-full h-full min-h-[600px] bg-black flex flex-col">
+            <div className="w-full bg-[#0c0e18] border-b border-[#1c1f2e] px-4 py-2 flex items-center justify-between text-xs shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="font-bold text-white text-[11px] sm:text-xs">Need for Speed: Most Wanted WebGPU</span>
+                <span className="text-slate-600 hidden sm:inline">•</span>
+                <span className="text-slate-400 text-[10px] sm:text-[11px]">
+                  Click <strong>&quot;Играть здесь (Play here)&quot;</strong> then <strong>&quot;Start game&quot;</strong>
+                </span>
               </div>
-
-              <div>
-                <h3 className="text-base font-bold text-white">dezm0n WebGPU / WASM Port</h3>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                  Due to browser security policies, WebGPU multithreading (<code className="text-cyan-300">SharedArrayBuffer</code>) requires its dedicated isolated window to unlock full 60 FPS performance without COOP/COEP iframe restrictions.
-                </p>
-              </div>
-
-              <div className="space-y-2 pt-2">
+              <div className="flex items-center gap-3">
                 <a
                   href="https://dezm0n.itch.io/nfs-most-wanted-web-port"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-600/30 flex items-center justify-center gap-2 transition-all"
+                  className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold text-[11px] transition-colors"
+                  title="Open isolated full-screen window"
                 >
-                  <Play className="w-4 h-4 fill-current" />
-                  Launch in Dedicated WebGPU Window
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Popout Window</span>
                 </a>
-
-                <button
-                  onClick={() => setNfsMode('canvas')}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[#1e2235] hover:bg-[#282d45] text-slate-300 hover:text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Zap className="w-3.5 h-3.5 text-violet-400" />
-                  Switch to Built-in 3D Racing Engine (Play Here)
-                </button>
               </div>
             </div>
+            <iframe
+              src="https://html.itch.zone/html/19661955-2192936/index.html?v=1792754056"
+              allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; focus-without-user-activation *; accelerometer; gyroscope"
+              allowFullScreen
+              className="w-full flex-1 min-h-[580px] border-0 bg-black"
+              title="Need for Speed: Most Wanted Black Edition Web Port"
+            />
           </div>
         ) : (
           <canvas
