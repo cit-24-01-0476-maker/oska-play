@@ -16,7 +16,7 @@ export type GameStatus =
   | 'ERROR'
   | 'UNPUBLISHED';
 
-export type RuntimeType = 'wasm-doom' | 'wasm-generic' | 'html5-canvas' | 'webgl-3d' | 'native-only';
+export type RuntimeType = 'wasm-doom' | 'wasm-generic' | 'html5-canvas' | 'webgl-3d' | 'racer-3d' | 'native-only';
 
 export interface GameLicense {
   creator: string;

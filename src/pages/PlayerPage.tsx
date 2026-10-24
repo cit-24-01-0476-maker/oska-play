@@ -3,6 +3,7 @@ import { Game } from '../types/game';
 import { DoomWasmAdapter } from '../modules/runtime/DoomWasmAdapter';
 import { Canvas2048Adapter } from '../modules/runtime/Canvas2048Adapter';
 import { WebGL3DAdapter } from '../modules/runtime/WebGL3DAdapter';
+import { CyberRacer3DAdapter } from '../modules/runtime/CyberRacer3DAdapter';
 import { saveManager } from '../modules/storage/SaveManager';
 import {
   Maximize2,
@@ -38,6 +39,9 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
   // In-game metrics
   const [currentFps, setCurrentFps] = useState<number>(game.runtimeConfig?.targetFps || 60);
   const [frameTimeMs, setFrameTimeMs] = useState<number>(16.6);
+  const [carSpeedKmh, setCarSpeedKmh] = useState<number>(0);
+  const [carNitro, setCarNitro] = useState<number>(100);
+  const [adaptiveQualityPill, setAdaptiveQualityPill] = useState<string>('HIGH (100%)');
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [crtEffect, setCrtEffect] = useState<boolean>(false);
@@ -106,18 +110,31 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           await c2048.start();
           setLoadingPercent(100);
           setLoadingStatus('Ready!');
-        } else if (game.runtimeConfig?.runtimeType === 'webgl-3d') {
-          setLoadingPercent(50);
-          setLoadingStatus('Initializing 3D Raycasting context...');
-          const dungeon = new WebGL3DAdapter(canvas, {
+        } else if (game.runtimeConfig?.runtimeType === 'racer-3d') {
+          canvas.width = 800;
+          canvas.height = 500;
+          setLoadingPercent(30);
+          setLoadingStatus('Streaming 3D Car & Highway track assets...');
+          const racer = new CyberRacer3DAdapter(canvas, {
+            onProgress: (p, text) => {
+              setLoadingPercent(p);
+              setLoadingStatus(text);
+            },
             onFpsUpdate: (fps, ft) => {
               setCurrentFps(fps);
               setFrameTimeMs(ft);
             },
+            onSpeedUpdate: (speedKmh, nitro) => {
+              setCarSpeedKmh(speedKmh);
+              setCarNitro(nitro);
+            },
+            onQualityAdjust: (mode, scale) => {
+              setAdaptiveQualityPill(`${mode} (${scale})`);
+            },
             onLog: (msg) => addLog(msg),
           });
-          runtimeRef.current = dungeon;
-          await dungeon.start();
+          runtimeRef.current = racer;
+          await racer.start();
           setLoadingPercent(100);
           setLoadingStatus('Ready!');
         }
@@ -211,6 +228,34 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
 
         {/* Real-time telemetry indicators */}
         <div className="flex items-center gap-4 text-xs font-mono">
+          {game.runtimeConfig?.runtimeType === 'racer-3d' && (
+            <div className="flex items-center gap-3">
+              {/* Speedometer */}
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#181a28] border border-cyan-500/30 text-cyan-300">
+                <span className="text-[10px] text-slate-400">SPEED:</span>
+                <span className="font-extrabold text-sm text-cyan-400">{carSpeedKmh}</span>
+                <span className="text-[10px]">KM/H</span>
+              </div>
+
+              {/* Nitro bar */}
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#181a28] border border-violet-500/30">
+                <span className="text-[10px] text-violet-400 font-bold">NITRO:</span>
+                <div className="w-16 h-2 rounded-full bg-[#121420] overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 transition-all duration-100"
+                    style={{ width: `${carNitro}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Adaptive hardware quality scale */}
+              <div className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#141724] border border-[#23283f] text-[11px] text-slate-300" title="Auto scaled based on your machine performance">
+                <span className="text-slate-400">Scale:</span>
+                <span className="text-emerald-400 font-bold">{adaptiveQualityPill}</span>
+              </div>
+            </div>
+          )}
+
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#141724] border border-[#21263d]">
             <Zap className="w-3.5 h-3.5 text-emerald-400" />
             <span className="text-emerald-400 font-bold">{currentFps} FPS</span>
