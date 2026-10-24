@@ -494,26 +494,31 @@ export class CyberRacer3DAdapter {
     ctx.ellipse(carX, carY + 10, carW * 0.65, 12, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Car Body (Sports Coupe)
-    ctx.fillStyle = '#7c3aed'; // Electric violet supercar body
+    // Car Body (Silver Metallic with Blue M3 GTR Racing Stripes)
+    ctx.fillStyle = '#cbd5e1'; // Metallic Silver
     ctx.beginPath();
     ctx.roundRect(carX - carW / 2, carY - carH, carW, carH, 12);
     ctx.fill();
 
+    // Iconic Blue Racing Stripes (NFS Most Wanted Hero Car Style)
+    ctx.fillStyle = '#1d4ed8'; // Racing Blue
+    ctx.fillRect(carX - carW * 0.18, carY - carH, carW * 0.12, carH);
+    ctx.fillRect(carX + carW * 0.06, carY - carH, carW * 0.12, carH);
+
     // Roof & Rear windshield
-    ctx.fillStyle = '#0d0f18';
+    ctx.fillStyle = '#0f172a';
     ctx.beginPath();
     ctx.roundRect(carX - carW * 0.35, carY - carH * 0.9, carW * 0.7, carH * 0.5, 6);
     ctx.fill();
 
     // Spoiler
-    ctx.fillStyle = '#1e1b4b';
+    ctx.fillStyle = '#1e293b';
     ctx.fillRect(carX - carW * 0.48, carY - carH * 0.95, carW * 0.96, 8);
 
     // Glowing Neon Taillights
     ctx.fillStyle = '#ef4444';
     ctx.shadowColor = '#ef4444';
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 14;
     ctx.fillRect(carX - carW * 0.42, carY - carH * 0.35, 34, 10);
     ctx.fillRect(carX + carW * 0.42 - 34, carY - carH * 0.35, 34, 10);
     ctx.shadowBlur = 0; // reset

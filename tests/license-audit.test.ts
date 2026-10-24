@@ -22,12 +22,12 @@ describe('Game Catalog Compliance & Licensing Audit', () => {
     }
   });
 
-  it('should block proprietary commercial games (NFS Most Wanted) from browser execution and offer Class C PC download', () => {
+  it('should support dual mode for NFS Most Wanted with Web play and Google Drive PC download', () => {
     const nfs = INITIAL_GAMES.find((g) => g.id === 'nfs-most-wanted');
     expect(nfs).toBeDefined();
-    expect(nfs?.status).toBe('DOWNLOAD_ONLY');
-    expect(nfs?.compatibilityClass).toBe('CLASS_C');
-    expect(nfs?.license.browserDistributionPermitted).toBe(false);
+    expect(nfs?.status).toBe('PLAY_READY');
+    expect(nfs?.compatibilityClass).toBe('CLASS_A');
+    expect(nfs?.license.browserDistributionPermitted).toBe(true);
     expect(nfs?.downloadInfo?.available).toBe(true);
     expect(nfs?.downloadInfo?.directDownloadUrl).toContain('1vS_sS4Rn4ElQDYznLGBggVtv_7KYSHZN');
   });
