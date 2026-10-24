@@ -52,9 +52,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
 
   // Graphics preset
   const [renderScale, setRenderScale] = useState<'100%' | '75%' | '50%'>('100%');
-  const [nfsMode, setNfsMode] = useState<'webgpu' | 'canvas'>(
-    game.id === 'nfs-most-wanted' ? 'webgpu' : 'canvas'
-  );
+  const [nfsMode, setNfsMode] = useState<'webgpu' | 'canvas'>('canvas');
 
   // Active runtime ref
   const runtimeRef = useRef<any>(null);
@@ -357,15 +355,43 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           </div>
         )}
 
-        {/* Execution Viewport: WebGPU Port iframe or Local Canvas */}
+        {/* Execution Viewport: WebGPU Port Launcher or Local Canvas Engine */}
         {game.id === 'nfs-most-wanted' && nfsMode === 'webgpu' ? (
-          <div className="relative w-full h-full min-h-[580px] bg-[#111719] flex flex-col items-center justify-center">
-            <iframe
-              src="https://itch.io/embed-upload/19661955?color=111719"
-              allow="autoplay; fullscreen; gamepad; focus-without-user-activation *"
-              className="w-full h-full min-h-[580px] border-0 rounded-b-xl"
-              title="Need for Speed: Most Wanted WebGPU Port"
-            />
+          <div className="relative w-full h-full min-h-[540px] bg-[#0c0e18] flex flex-col items-center justify-center p-8 text-center animate-in fade-in">
+            <div className="max-w-md p-6 rounded-2xl bg-[#141726] border border-cyan-500/30 shadow-2xl space-y-4">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-cyan-600 to-indigo-600 p-[2px]">
+                <div className="w-full h-full bg-[#0d0f19] rounded-[14px] flex items-center justify-center">
+                  <Gamepad2 className="w-7 h-7 text-cyan-400" />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-base font-bold text-white">dezm0n WebGPU / WASM Port</h3>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Due to browser security policies, WebGPU multithreading (<code className="text-cyan-300">SharedArrayBuffer</code>) requires its dedicated isolated window to unlock full 60 FPS performance without COOP/COEP iframe restrictions.
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <a
+                  href="https://dezm0n.itch.io/nfs-most-wanted-web-port"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-600/30 flex items-center justify-center gap-2 transition-all"
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  Launch in Dedicated WebGPU Window
+                </a>
+
+                <button
+                  onClick={() => setNfsMode('canvas')}
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#1e2235] hover:bg-[#282d45] text-slate-300 hover:text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Zap className="w-3.5 h-3.5 text-violet-400" />
+                  Switch to Built-in 3D Racing Engine (Play Here)
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
           <canvas
