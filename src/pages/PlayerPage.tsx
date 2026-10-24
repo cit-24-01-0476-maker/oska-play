@@ -483,10 +483,14 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
             <iframe
               key={`${game.id}-${iframeKey}`}
               src={embedSource}
-              onLoad={() => {
+              onLoad={(e) => {
                 setIframeLoading(false);
                 addLog(`OSKA DirectPlay Engine initialized for ${game.title}`);
+                try {
+                  e.currentTarget.focus();
+                } catch {}
               }}
+              {...({ credentialless: 'true' } as any)}
               sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-downloads"
               allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; accelerometer; gyroscope; clipboard-write; keyboard-map"
               referrerPolicy="no-referrer"
