@@ -488,7 +488,8 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
                 addLog(`OSKA DirectPlay Engine initialized for ${game.title}`);
               }}
               sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-downloads"
-              allow="autoplay; fullscreen *; gamepad; accelerometer; gyroscope; clipboard-write; keyboard-map"
+              allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; accelerometer; gyroscope; clipboard-write; keyboard-map"
+              referrerPolicy="no-referrer"
               className="w-full flex-1 min-h-[600px] border-0 bg-black"
               title={`${game.title} - OSKA DirectPlay Engine`}
             />
