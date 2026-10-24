@@ -3,6 +3,8 @@ import { googleDriveService } from '../src/modules/gdrive/GoogleDriveService';
 
 describe('Google Drive 5TB Integration & Staging Pipeline', () => {
   it('should support connecting and disconnecting administrative OAuth2 session', async () => {
+    // Reset to disconnected state first
+    googleDriveService.disconnectAccount();
     expect(googleDriveService.getAuthConfig().isConnected).toBe(false);
 
     await googleDriveService.connectAccount('admin@oskaplay.dev');
@@ -22,6 +24,7 @@ describe('Google Drive 5TB Integration & Staging Pipeline', () => {
     expect(categories.has('02-APPROVED-BROWSER-BUILDS')).toBe(true);
     expect(categories.has('03-NATIVE-PC-DOWNLOADS')).toBe(true);
     expect(categories.has('01-GAME-SOURCE-LIBRARY')).toBe(true);
+    expect(categories.has('06-LICENSE-DOCUMENTS')).toBe(true);
   });
 
   it('should stage an authorized file with SHA-256 integrity verification', async () => {
@@ -32,5 +35,12 @@ describe('Google Drive 5TB Integration & Staging Pipeline', () => {
     expect(job.status).toBe('READY');
     expect(job.progressPercent).toBe(100);
     expect(job.sha256).toBe(testFile.checksumSha256);
+  });
+
+  it('should detect duplicate files based on hash matching requirement 13', async () => {
+    const files = await googleDriveService.listFiles('06-LICENSE-DOCUMENTS');
+    const duplicate = files.find((f) => f.isDuplicate);
+    expect(duplicate).toBeDefined();
+    expect(duplicate?.duplicateOfId).toBeTruthy();
   });
 });

@@ -1,26 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Game } from '../types/game';
+import type { Game } from '../types/game';
 import {
   googleDriveService,
-  GoogleDriveFile,
-  GoogleDriveAuthConfig,
-  StagingJob,
+  type GoogleDriveFile,
+  type GoogleDriveAuthConfig,
 } from '../modules/gdrive/GoogleDriveService';
-import { GameImportEngine, ValidationReport } from '../modules/importer/GameImportEngine';
+import { GameImportEngine, type ValidationReport } from '../modules/importer/GameImportEngine';
 import {
   HardDrive,
   ShieldCheck,
-  ShieldAlert,
   Folder,
   FileCode,
   FileArchive,
   RefreshCw,
   CheckCircle2,
   AlertTriangle,
-  Play,
   Upload,
   Lock,
-  Layers,
+  ExternalLink,
+  Eye,
+  Copy,
+  Link,
 } from 'lucide-react';
 
 interface AdminPageProps {
@@ -28,22 +28,25 @@ interface AdminPageProps {
   onAddGame: (game: Game) => void;
 }
 
-export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
+export const AdminPage: React.FC<AdminPageProps> = ({ onAddGame }) => {
   const [authConfig, setAuthConfig] = useState<GoogleDriveAuthConfig>(googleDriveService.getAuthConfig());
   const [files, setFiles] = useState<GoogleDriveFile[]>([]);
-  const [selectedFolder, setSelectedFolder] = useState<string>('02-APPROVED-BROWSER-BUILDS');
-  const [stagingJob, setStagingJob] = useState<StagingJob | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<string>('06-LICENSE-DOCUMENTS');
   const [validationReport, setValidationReport] = useState<ValidationReport | null>(null);
   const [selectedFileForImport, setSelectedFileForImport] = useState<GoogleDriveFile | null>(null);
   const [importNotice, setImportNotice] = useState<string | null>(null);
+  const [folderInputUrl, setFolderInputUrl] = useState<string>(
+    'https://drive.google.com/drive/folders/1f-kGBY-djNnaCztj5-p704g1zxOnztOW?usp=sharing'
+  );
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const folders = [
-    '01-GAME-SOURCE-LIBRARY',
+    '06-LICENSE-DOCUMENTS',
     '02-APPROVED-BROWSER-BUILDS',
     '03-NATIVE-PC-DOWNLOADS',
+    '01-GAME-SOURCE-LIBRARY',
     '04-GAME-ARTWORK',
     '05-GAME-METADATA',
-    '06-LICENSE-DOCUMENTS',
   ];
 
   const refreshFiles = async () => {
@@ -55,9 +58,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
     refreshFiles();
   }, []);
 
-  const handleConnect = async () => {
-    await googleDriveService.connectAccount('owner@oskaplay.dev');
+  const handleConnectFolder = async () => {
+    await googleDriveService.connectFolderUrl(folderInputUrl);
     setAuthConfig(googleDriveService.getAuthConfig());
+    setImportNotice(`Successfully synchronized Google Drive Folder: ${authConfig.connectedFolderId}`);
+    setTimeout(() => setImportNotice(null), 3000);
+    refreshFiles();
   };
 
   const handleDisconnect = () => {
@@ -69,28 +75,27 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
     setSelectedFileForImport(file);
     setValidationReport(null);
     try {
-      const job = await googleDriveService.stageFile(file.id);
-      setStagingJob(job);
+      await googleDriveService.stageFile(file.id);
       refreshFiles();
+      setImportNotice(`File "${file.name}" staged with verified SHA-256 integrity hash!`);
+      setTimeout(() => setImportNotice(null), 3000);
     } catch (err: any) {
       alert(`Staging failed: ${err.message}`);
     }
   };
 
   const handleRunValidation = (file: GoogleDriveFile) => {
-    // Construct manifest based on file type
     const isWasm = file.name.includes('wasm');
     const isHtml5 = file.name.includes('html5') || file.name.includes('2048');
-    const isNative = file.name.includes('windows') || file.name.includes('iso');
 
     const manifest = {
       name: file.name,
       version: '1.0.0',
-      entryPoint: isWasm ? 'doom.wasm' : isHtml5 ? 'index.html' : 'game.exe',
+      entryPoint: isWasm ? 'doom.wasm' : isHtml5 ? 'index.html' : 'license.png',
       runtime: isWasm ? 'wasm-doom' : isHtml5 ? 'html5-canvas' : 'native-only',
       files: [
         {
-          path: isWasm ? 'doom.wasm' : isHtml5 ? 'index.html' : 'game.exe',
+          path: isWasm ? 'doom.wasm' : isHtml5 ? 'index.html' : 'license.png',
           sizeBytes: file.sizeBytes,
           sha256: file.checksumSha256,
         },
@@ -100,7 +105,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
     };
 
     const declaredClass = isWasm || isHtml5 ? 'CLASS_A' : file.name.includes('opentyrian') ? 'CLASS_C' : 'CLASS_D';
-    const legalClearance = !file.name.includes('nfs'); // NFS is proprietary commercial
+    const legalClearance = !file.name.includes('nfs');
 
     const report = GameImportEngine.validatePackage(manifest, declaredClass, legalClearance);
     setValidationReport(report);
@@ -163,26 +168,28 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
       )}
 
       {/* Header */}
-      <div className="border-b border-[#1c1f2e] pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="border-b border-[#1c1f2e] pb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-cyan-400 uppercase tracking-wider mb-1">
             <Lock className="w-4 h-4" /> Administrative Control Panel
           </div>
           <h1 className="text-3xl font-black text-white tracking-tight">Google Drive 5TB Manager</h1>
           <p className="text-slate-400 text-xs sm:text-sm mt-1">
-            Authorized private game source integration, staging pipeline, package security validation, and publishing.
+            Authorized private game source integration, live folder synchronization, staging, and package validation.
           </p>
         </div>
 
-        {/* OAuth Connect Button */}
+        {/* OAuth Connect Status */}
         <div>
           {authConfig.isConnected ? (
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5 justify-end">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Connected to Google Drive
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Google Drive Connected
                 </div>
-                <div className="text-[11px] font-mono text-slate-400">{authConfig.userEmail}</div>
+                <div className="text-[11px] font-mono text-cyan-400">
+                  Folder ID: {authConfig.connectedFolderId || 'Default'}
+                </div>
               </div>
               <button
                 onClick={handleDisconnect}
@@ -193,12 +200,49 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
             </div>
           ) : (
             <button
-              onClick={handleConnect}
+              onClick={() => handleConnectFolder()}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-semibold text-xs shadow-lg shadow-cyan-600/30 transition-all"
             >
               <HardDrive className="w-4 h-4" /> Connect Google Account (5TB)
             </button>
           )}
+        </div>
+      </div>
+
+      {/* Live Google Drive Folder Link Synchronizer */}
+      <div className="p-5 rounded-2xl bg-[#10121d] border border-[#23273b] space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-bold text-slate-200 flex items-center gap-2">
+            <Link className="w-4 h-4 text-cyan-400" />
+            Connected Google Drive Folder Link
+          </label>
+          <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-800/40">
+            Active Drive Link
+          </span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <input
+            type="text"
+            value={folderInputUrl}
+            onChange={(e) => setFolderInputUrl(e.target.value)}
+            placeholder="Paste Google Drive folder sharing link..."
+            className="flex-1 px-3.5 py-2 rounded-xl bg-[#151726] border border-[#23283f] text-xs text-slate-200 font-mono focus:outline-hidden focus:border-cyan-500"
+          />
+          <button
+            onClick={handleConnectFolder}
+            className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs shadow-md shadow-cyan-600/20 transition-all shrink-0 flex items-center justify-center gap-1.5"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Sync Folder
+          </button>
+          <a
+            href={folderInputUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 rounded-xl bg-[#161827] border border-[#23283e] text-slate-400 hover:text-white flex items-center justify-center"
+            title="Open in Google Drive"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </a>
         </div>
       </div>
 
@@ -219,7 +263,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
           />
         </div>
         <div className="flex justify-between text-[11px] text-slate-400 pt-1">
-          <span>Root: Google Drive / OSKA-PLAY</span>
+          <span>Active Root: Google Drive / OSKA-PLAY</span>
           <span>Security Scope: drive.file (Minimal Auth)</span>
         </div>
       </div>
@@ -272,7 +316,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
                 {filteredFiles.map((file) => (
                   <div
                     key={file.id}
-                    className="p-3.5 rounded-xl bg-[#141624] border border-[#1e2236] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
+                      file.isDuplicate
+                        ? 'bg-[#181216] border-amber-500/30'
+                        : 'bg-[#141624] border-[#1e2236]'
+                    }`}
                   >
                     <div className="flex items-start gap-3">
                       <div className="p-2 rounded-lg bg-[#1c2033] text-cyan-400 shrink-0">
@@ -283,7 +331,15 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
                         )}
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-slate-200">{file.name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-200">{file.name}</span>
+                          {file.isDuplicate && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 font-semibold">
+                              Duplicate Detected
+                            </span>
+                          )}
+                        </div>
+
                         <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1">
                           <span className="font-mono text-cyan-400">{file.formattedSize}</span>
                           <span>•</span>
@@ -293,6 +349,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
                             {file.isStaged ? 'Staged Locally' : 'Remote in Drive'}
                           </span>
                         </div>
+
                         {file.checksumSha256 && (
                           <div className="text-[10px] font-mono text-slate-400 mt-1 truncate max-w-md">
                             SHA-256: {file.checksumSha256}
@@ -302,6 +359,16 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
+                      {file.mimeType.includes('image') && (
+                        <button
+                          onClick={() => setPreviewImageUrl(file.directDownloadUrl || null)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#1c2033] hover:bg-[#252b42] text-slate-300 text-xs font-medium transition-colors"
+                          title="Preview Document"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-cyan-400" /> Preview
+                        </button>
+                      )}
+
                       {!file.isStaged ? (
                         <button
                           onClick={() => handleStageFile(file)}
@@ -389,18 +456,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
                 </div>
               </div>
 
-              {/* Errors & Warnings */}
-              {validationReport.errors.length > 0 && (
-                <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/30 text-xs text-rose-300 space-y-1">
-                  {validationReport.errors.map((err, i) => (
-                    <div key={i} className="flex items-start gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-rose-400" />
-                      <span>{err}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
               {/* Publish Action */}
               <div className="flex justify-end gap-3 pt-2">
                 <button
@@ -422,6 +477,40 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onAddGame }) => {
           )}
         </div>
       </div>
+
+      {/* Document / Slip Preview Modal */}
+      {previewImageUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <div className="relative max-w-2xl w-full bg-[#10121d] border border-[#23273b] rounded-2xl p-4 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#1c1f2e] pb-2">
+              <span className="text-xs font-bold text-white flex items-center gap-2">
+                <Eye className="w-4 h-4 text-cyan-400" /> Verified Document Preview (Google Drive)
+              </span>
+              <button
+                onClick={() => setPreviewImageUrl(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex items-center justify-center p-2 bg-[#090a10] rounded-xl overflow-hidden max-h-[480px]">
+              <img
+                src={previewImageUrl}
+                alt="Document Preview"
+                className="max-h-[460px] object-contain rounded-lg"
+              />
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setPreviewImageUrl(null)}
+                className="px-4 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-semibold"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
