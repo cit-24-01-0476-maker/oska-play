@@ -73,7 +73,7 @@ export interface Game {
   title: string;
   tagline: string;
   description: string;
-  genre: 'Action' | 'Shooter' | 'Retro' | 'Puzzle' | 'Racing' | 'Adventure' | 'Strategy' | 'Indie' | 'Open World' | 'Sandbox' | 'Platformer';
+  genre: 'Action' | 'Shooter' | 'Retro' | 'Puzzle' | 'Racing' | 'Adventure' | 'Strategy' | 'Indie' | 'Open World' | 'Sandbox' | 'Platformer' | 'RPG';
   compatibilityClass: GameCompatibilityClass;
   status: GameStatus;
   developer: string;
