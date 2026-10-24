@@ -52,6 +52,9 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
 
   // Graphics preset
   const [renderScale, setRenderScale] = useState<'100%' | '75%' | '50%'>('100%');
+  const [nfsMode, setNfsMode] = useState<'webgpu' | 'canvas'>(
+    game.id === 'nfs-most-wanted' ? 'webgpu' : 'canvas'
+  );
 
   // Active runtime ref
   const runtimeRef = useRef<any>(null);
@@ -64,6 +67,13 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
     let isCancelled = false;
 
     const startRuntime = async () => {
+      if (game.id === 'nfs-most-wanted' && nfsMode === 'webgpu') {
+        setIsLoaded(true);
+        setLoadingPercent(100);
+        addLog('Loaded Need for Speed: Most Wanted WebGPU/WASM Port (dezm0n edition).');
+        return;
+      }
+
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -159,7 +169,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
         runtimeRef.current.stop();
       }
     };
-  }, [game]);
+  }, [game, nfsMode]);
 
   const handleToggleFullscreen = () => {
     if (!containerRef.current) return;
@@ -256,6 +266,34 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
             </div>
           )}
 
+          {game.id === 'nfs-most-wanted' && (
+            <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#141624] border border-[#23283f]">
+              <button
+                onClick={() => {
+                  setNfsMode('webgpu');
+                  setIsLoaded(true);
+                }}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
+                  nfsMode === 'webgpu'
+                    ? 'bg-cyan-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🎮 WebGPU Port (dezm0n)
+              </button>
+              <button
+                onClick={() => setNfsMode('canvas')}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
+                  nfsMode === 'canvas'
+                    ? 'bg-violet-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                ⚡ 3D Street Circuit
+              </button>
+            </div>
+          )}
+
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#141724] border border-[#21263d]">
             <Zap className="w-3.5 h-3.5 text-emerald-400" />
             <span className="text-emerald-400 font-bold">{currentFps} FPS</span>
@@ -319,16 +357,27 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           </div>
         )}
 
-        {/* The Actual Game Canvas */}
-        <canvas
-          ref={canvasRef}
-          id="game-canvas"
-          tabIndex={0}
-          className={`max-w-full max-h-full object-contain cursor-crosshair focus:outline-hidden transition-all duration-200 ${
-            renderScale === '75%' ? 'scale-75' : renderScale === '50%' ? 'scale-50' : 'scale-100'
-          }`}
-          style={{ imageRendering: 'pixelated' }}
-        />
+        {/* Execution Viewport: WebGPU Port iframe or Local Canvas */}
+        {game.id === 'nfs-most-wanted' && nfsMode === 'webgpu' ? (
+          <div className="relative w-full h-full min-h-[580px] bg-[#111719] flex flex-col items-center justify-center">
+            <iframe
+              src="https://itch.io/embed-upload/19661955?color=111719"
+              allow="autoplay; fullscreen; gamepad; focus-without-user-activation *"
+              className="w-full h-full min-h-[580px] border-0 rounded-b-xl"
+              title="Need for Speed: Most Wanted WebGPU Port"
+            />
+          </div>
+        ) : (
+          <canvas
+            ref={canvasRef}
+            id="game-canvas"
+            tabIndex={0}
+            className={`max-w-full max-h-full object-contain cursor-crosshair focus:outline-hidden transition-all duration-200 ${
+              renderScale === '75%' ? 'scale-75' : renderScale === '50%' ? 'scale-50' : 'scale-100'
+            }`}
+            style={{ imageRendering: 'pixelated' }}
+          />
+        )}
 
         {/* Scanlines / CRT Overlay */}
         {crtEffect && <div className="absolute inset-0 crt-overlay pointer-events-none z-10" />}
