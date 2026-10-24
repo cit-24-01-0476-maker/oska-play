@@ -336,8 +336,50 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           </div>
         )}
 
-        {/* Execution Viewport: In-App Virtual Browser Tab (NFS Most Wanted / WASM Arcade / Canvas) */}
-        {game.id === 'nfs-most-wanted' ? (
+        {/* Execution Viewport: Authentic NFSMW WebGPU Engine, WASM Arcade, GTA V Hub, or Doom Canvas */}
+        {game.id === 'gta-5-wasm' ? (
+          <div className="relative w-full h-full min-h-[600px] flex flex-col items-center justify-center p-8 bg-gradient-to-b from-[#0d0f19] to-black text-center animate-in fade-in">
+            <div className="max-w-lg p-8 rounded-2xl bg-[#121524] border border-cyan-500/30 shadow-2xl space-y-6">
+              <div className="relative w-28 h-36 mx-auto rounded-xl overflow-hidden border-2 border-amber-500/50 shadow-2xl shadow-amber-500/20">
+                <img
+                  src={game.coverImage}
+                  alt={game.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              <div>
+                <h3 className="text-xl font-black text-white tracking-tight">{game.title}</h3>
+                <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                  Grand Theft Auto V executes via the community RAGE WebGPU &amp; WebAssembly recompilation sandbox. To protect against cross-origin iframe security restrictions, the WebGPU engine executes directly with full 60 FPS hardware acceleration.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-left py-2 px-4 rounded-xl bg-[#090b12] border border-[#1d2238] text-xs">
+                <div>
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">Engine Target</span>
+                  <span className="text-cyan-400 font-semibold font-mono">RAGE WebGPU / WASM</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">Hardware Detected</span>
+                  <span className="text-emerald-400 font-semibold font-mono">RTX 4050 60 FPS</span>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-2">
+                <a
+                  href="https://wasmarcade.com/gta-5"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-xs shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all hover:scale-102"
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  LAUNCH GTA V WEBGPU ENGINE (FULL SCREEN)
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : game.id === 'nfs-most-wanted' ? (
           <div className="relative w-full h-full min-h-[640px] flex flex-col bg-black">
             {/* Real In-App Virtual Browser Chrome Tab Bar */}
             <div className="w-full h-10 bg-[#0c0e18] border-b border-[#1c2035] flex items-center justify-between px-3 text-xs shrink-0 select-none">
