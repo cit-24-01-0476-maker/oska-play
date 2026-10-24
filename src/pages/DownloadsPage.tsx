@@ -108,7 +108,7 @@ export const DownloadsPage: React.FC<DownloadsPageProps> = ({ games, onSelectGam
                     <span className="text-cyan-400">{dl.targetOS}</span>
                     <span>•</span>
                     <span className="text-emerald-400 flex items-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5" /> Verified Legal (GPLv2)
+                      <ShieldCheck className="w-3.5 h-3.5" /> Verified Legal ({game.license?.sourceCodeLicense || 'Permissive'})
                     </span>
                   </div>
 

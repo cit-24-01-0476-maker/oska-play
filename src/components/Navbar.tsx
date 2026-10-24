@@ -99,6 +99,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             Hardware
           </button>
           <button
+            onClick={() => onSelectTab('boost')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+              currentTab === 'boost'
+                ? 'bg-gradient-to-r from-amber-500 to-rose-500 text-white shadow-md shadow-amber-500/30'
+                : 'text-amber-400 hover:text-amber-300 hover:bg-[#1a1d2d]'
+            }`}
+            title="100% Game Booster & Hardware Optimization"
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-400 fill-current" />
+            Boost 100%
+          </button>
+          <button
             onClick={() => onSelectTab('admin')}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
               currentTab === 'admin'

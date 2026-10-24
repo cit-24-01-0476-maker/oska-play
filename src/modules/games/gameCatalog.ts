@@ -210,8 +210,9 @@ export const INITIAL_GAMES: Game[] = [
       'Change Camera': 'C key',
     },
     runtimeConfig: {
-      runtimeType: 'racer-3d',
+      runtimeType: 'web-tab',
       entryPoint: 'nfs-most-wanted-web',
+      embedUrl: '/games/nfsmw/index.html',
       canvasWidth: 800,
       canvasHeight: 500,
       targetFps: 60,

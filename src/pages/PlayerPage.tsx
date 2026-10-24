@@ -2,18 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Game } from '../types/game';
 import { DoomWasmAdapter } from '../modules/runtime/DoomWasmAdapter';
 import { Canvas2048Adapter } from '../modules/runtime/Canvas2048Adapter';
-import { WebGL3DAdapter } from '../modules/runtime/WebGL3DAdapter';
 import { CyberRacer3DAdapter } from '../modules/runtime/CyberRacer3DAdapter';
 import { saveManager } from '../modules/storage/SaveManager';
 import {
   Maximize2,
-  Volume2,
-  VolumeX,
   Pause,
   Play,
   Save,
   RotateCcw,
-  Sliders,
   X,
   Terminal,
   Gamepad2,
@@ -25,7 +21,6 @@ import {
   ArrowRight,
   Plus,
   Cpu,
-  Lock,
 } from 'lucide-react';
 
 interface PlayerPageProps {
@@ -45,12 +40,8 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
 
   // In-game metrics
   const [currentFps, setCurrentFps] = useState<number>(game.runtimeConfig?.targetFps || 60);
-  const [frameTimeMs, setFrameTimeMs] = useState<number>(16.6);
   const [carSpeedKmh, setCarSpeedKmh] = useState<number>(0);
-  const [carNitro, setCarNitro] = useState<number>(100);
-  const [adaptiveQualityPill, setAdaptiveQualityPill] = useState<string>('HIGH (100%)');
   const [isPaused, setIsPaused] = useState<boolean>(false);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
   const [crtEffect, setCrtEffect] = useState<boolean>(false);
   const [showConsole, setShowConsole] = useState<boolean>(false);
   const [showControlsModal, setShowControlsModal] = useState<boolean>(false);
@@ -64,8 +55,8 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
   const [iframeLoading, setIframeLoading] = useState<boolean>(true);
   const [iframeKey, setIframeKey] = useState<number>(0);
 
-  const isWebGame = game.id === 'nfs-most-wanted' || Boolean(game.runtimeConfig?.embedUrl);
-  const embedSource = game.id === 'nfs-most-wanted' ? '/games/nfsmw/index.html' : game.runtimeConfig?.embedUrl;
+  const isWebGame = Boolean(game.runtimeConfig?.embedUrl);
+  const embedSource = game.runtimeConfig?.embedUrl;
 
   const handleRestartGame = () => {
     if (isWebGame) {
@@ -96,7 +87,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
     let isCancelled = false;
 
     const startRuntime = async () => {
-      if (game.id === 'nfs-most-wanted' || game.runtimeConfig?.embedUrl) {
+      if (game.runtimeConfig?.embedUrl) {
         setIsLoaded(true);
         setLoadingPercent(100);
         addLog(`Loaded In-App PC Engine for ${game.title}.`);
@@ -123,10 +114,9 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
               setLoadError(err);
               addLog(`Error: ${err}`);
             },
-            onFpsUpdate: (fps, ft) => {
+            onFpsUpdate: (fps) => {
               if (isCancelled) return;
               setCurrentFps(fps);
-              setFrameTimeMs(ft);
             },
             onLog: (msg) => {
               addLog(msg);
@@ -139,9 +129,8 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           setLoadingPercent(50);
           setLoadingStatus('Initializing Canvas 2D engine...');
           const c2048 = new Canvas2048Adapter(canvas, {
-            onFpsUpdate: (fps, ft) => {
+            onFpsUpdate: (fps) => {
               setCurrentFps(fps);
-              setFrameTimeMs(ft);
             },
             onLog: (msg) => addLog(msg),
           });
@@ -159,16 +148,11 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
               setLoadingPercent(p);
               setLoadingStatus(text);
             },
-            onFpsUpdate: (fps, ft) => {
+            onFpsUpdate: (fps) => {
               setCurrentFps(fps);
-              setFrameTimeMs(ft);
             },
-            onSpeedUpdate: (speedKmh, nitro) => {
+            onSpeedUpdate: (speedKmh) => {
               setCarSpeedKmh(speedKmh);
-              setCarNitro(nitro);
-            },
-            onQualityAdjust: (mode, scale) => {
-              setAdaptiveQualityPill(`${mode} (${scale})`);
             },
             onLog: (msg) => addLog(msg),
           });
@@ -552,11 +536,27 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
 
           <span className="text-slate-700 hidden lg:inline">|</span>
 
-          {game.id === 'gta-5' ? (
+          {game.id === 'gta-5' && (
             <span className="text-[11px] text-amber-300/90 hidden xl:inline animate-pulse">
               💡 Click game screen to unlock audio • Press SPACE (Sandbox) or ENTER (Story) • Stream takes 30-60s
             </span>
-          ) : (
+          )}
+          {game.id === 'gta-vice-city' && (
+            <span className="text-[11px] text-violet-300/90 hidden xl:inline">
+              💡 Click screen to capture mouse aim • WASD to drive & walk • Press <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">ESC</kbd> to unlock cursor
+            </span>
+          )}
+          {game.id === 'minecraft-web' && (
+            <span className="text-[11px] text-emerald-300/90 hidden xl:inline">
+              💡 Click canvas to lock mouse camera • E for Inventory • Press <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">ESC</kbd> to unlock cursor
+            </span>
+          )}
+          {game.id === 'nfs-most-wanted' && (
+            <span className="text-[11px] text-cyan-300/90 hidden xl:inline">
+              💡 Arrow Keys / WASD to steer & accelerate • <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">SPACE</kbd> / <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">SHIFT</kbd> for Nitrous Boost
+            </span>
+          )}
+          {!['gta-5', 'gta-vice-city', 'minecraft-web', 'nfs-most-wanted'].includes(game.id) && (
             <span className="text-[11px] text-slate-500 hidden xl:inline">
               Press <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">ESC</kbd> to unlock cursor
             </span>

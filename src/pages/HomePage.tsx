@@ -34,7 +34,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* Cinematic Backdrop Image */}
         <div className="absolute inset-0 z-0">
           <img
-            src={featuredGame.bannerImage}
+            src={featuredGame?.bannerImage || ''}
             alt="Hero Background"
             className="w-full h-full object-cover opacity-30 filter blur-xs scale-105"
           />
@@ -63,16 +63,16 @@ export const HomePage: React.FC<HomePageProps> = ({
 
           <div className="flex flex-wrap items-center gap-4">
             <button
-              onClick={() => onPlay(featuredGame)}
-              className="flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold text-sm shadow-lg shadow-violet-600/30 hover:shadow-violet-600/50 hover:scale-102 transition-all"
+              onClick={() => featuredGame && onPlay(featuredGame)}
+              className="flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold text-sm shadow-lg shadow-violet-600/30 hover:shadow-violet-600/50 hover:scale-102 transition-all cursor-pointer"
             >
               <Play className="w-4 h-4 fill-current" />
               Play {featuredGame ? (featuredGame.title.includes('(') ? featuredGame.title.split('(')[0].trim() : featuredGame.title) : 'Now'}
             </button>
 
             <button
-              onClick={() => onDetails(featuredGame)}
-              className="px-5 py-3.5 rounded-xl bg-[#161826] hover:bg-[#1f2235] text-slate-200 border border-[#2a2e45] text-sm font-semibold transition-all"
+              onClick={() => featuredGame && onDetails(featuredGame)}
+              className="px-5 py-3.5 rounded-xl bg-[#161826] hover:bg-[#1f2235] text-slate-200 border border-[#2a2e45] text-sm font-semibold transition-all cursor-pointer"
             >
               View Game Specs
             </button>

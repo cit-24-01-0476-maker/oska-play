@@ -26,6 +26,22 @@ export function App() {
     DeviceCapabilityDetector.detect().then((diag) => {
       setDiagnostics(diag);
     });
+
+    // Check for /boost or #boost in URL
+    const handleUrlRoute = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path === '/boost' || hash === '#boost' || path.endsWith('/boost')) {
+        setIsBenchmarkOpen(true);
+      }
+    };
+    handleUrlRoute();
+    window.addEventListener('hashchange', handleUrlRoute);
+    window.addEventListener('popstate', handleUrlRoute);
+    return () => {
+      window.removeEventListener('hashchange', handleUrlRoute);
+      window.removeEventListener('popstate', handleUrlRoute);
+    };
   }, []);
 
   const handlePlayGame = (game: Game) => {
@@ -58,6 +74,10 @@ export function App() {
       <Navbar
         currentTab={activeTab}
         onSelectTab={(tab) => {
+          if (tab === 'boost') {
+            setIsBenchmarkOpen(true);
+            return;
+          }
           setActiveTab(tab);
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}

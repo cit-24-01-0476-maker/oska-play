@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Game } from '../types/game';
 import { GameCard } from '../components/GameCard';
-import { Search, SlidersHorizontal, Compass, Sparkles } from 'lucide-react';
+import { Search, Compass } from 'lucide-react';
 
 interface LibraryPageProps {
   games: Game[];
