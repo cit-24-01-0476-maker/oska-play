@@ -20,6 +20,12 @@ import {
   Zap,
   HelpCircle,
   ExternalLink,
+  ShieldCheck,
+  ArrowLeft,
+  ArrowRight,
+  Plus,
+  Cpu,
+  Lock,
 } from 'lucide-react';
 
 interface PlayerPageProps {
@@ -239,89 +245,140 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
       ref={containerRef}
       className="relative flex flex-col bg-[#08090d] text-white min-h-[680px] rounded-2xl overflow-hidden border border-[#1e2235] shadow-2xl"
     >
-      {/* Top Header Bar */}
-      <div className="h-14 px-4 bg-[#0d0f18] border-b border-[#1c1f2e] flex items-center justify-between shrink-0 z-20">
-        <div className="flex items-center gap-3">
+      {/* Level 1: Virtual Browser Tab Bar & Window Header */}
+      <div className="h-10 px-3 bg-[#0a0c14] border-b border-[#1b1f30] flex items-center justify-between shrink-0 select-none z-20">
+        <div className="flex items-center gap-2">
+          {/* OS Window Traffic Light Buttons */}
+          <div className="flex items-center gap-1.5 mr-2">
+            <button
+              onClick={onExit}
+              className="w-3 h-3 rounded-full bg-rose-500/80 hover:bg-rose-500 flex items-center justify-center group transition-colors cursor-pointer"
+              title="Close Tab (Return to Library)"
+            >
+              <X className="w-2 h-2 text-rose-950 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+            <div className="w-3 h-3 rounded-full bg-amber-500/80 hover:bg-amber-500" title="Minimize Window" />
+            <button
+              onClick={handleToggleFullscreen}
+              className="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-500 flex items-center justify-center group transition-colors cursor-pointer"
+              title="Maximize / Fullscreen"
+            >
+              <Maximize2 className="w-1.5 h-1.5 text-emerald-950 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          </div>
+
+          {/* Active Browser Tab */}
+          <div className="flex items-center gap-2 px-3 py-1 rounded-t-lg bg-[#141726] border-t border-x border-[#23273e] text-xs font-medium text-slate-100 shadow-sm max-w-[260px] truncate">
+            {game.coverImage ? (
+              <img src={game.coverImage} alt="" className="w-3.5 h-3.5 rounded-xs object-cover shrink-0" />
+            ) : (
+              <Gamepad2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            )}
+            <span className="truncate">{game.title}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" title="Live In-Browser Session" />
+            <button
+              onClick={onExit}
+              className="ml-1 p-0.5 rounded-xs hover:bg-[#20253d] text-slate-400 hover:text-white cursor-pointer"
+              title="Close Tab"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* New Tab Button */}
           <button
             onClick={onExit}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1a1d2e] transition-colors"
-            title="Exit Game to Library"
+            className="p-1 rounded-md text-slate-500 hover:text-slate-300 hover:bg-[#141726] transition-colors cursor-pointer"
+            title="Browse More Games"
           >
-            <X className="w-5 h-5" />
+            <Plus className="w-3.5 h-3.5" />
           </button>
-          <div>
-            <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-              {game.title}
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-800/40 text-cyan-300 font-mono">
-                {isWebGame ? 'DirectPlay™ WebGPU' : game.runtimeConfig?.runtimeType}
-              </span>
-            </h2>
+        </div>
+
+        {/* Right Info: Virtual Browser Engine */}
+        <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-slate-400">
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#121422] border border-[#1f2337] text-cyan-300">
+            <Cpu className="w-3 h-3 text-cyan-400" />
+            <span>OSKA DirectPlay™ Browser Engine v2.4</span>
+          </div>
+          <button
+            onClick={handleToggleFullscreen}
+            className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-[#141726] transition-colors cursor-pointer"
+            title="Fullscreen"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Level 2: Browser Navigation & Omnibox Address Bar */}
+      <div className="h-11 px-3 bg-[#0d0f18] border-b border-[#1c1f2e] flex items-center justify-between gap-3 shrink-0 z-20">
+        {/* Navigation Controls */}
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={onExit}
+            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-[#1a1d2e] transition-colors cursor-pointer"
+            title="Back to Details"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+          </button>
+          <button
+            disabled
+            className="p-1.5 rounded-md text-slate-600 cursor-not-allowed"
+            title="Forward"
+          >
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={handleRestartGame}
+            className="p-1.5 rounded-md text-slate-400 hover:text-cyan-400 hover:bg-[#1a1d2e] transition-colors cursor-pointer"
+            title="Reload In-Browser Tab"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-cyan-400" />
+          </button>
+        </div>
+
+        {/* Real-looking In-App Omnibox Address Bar */}
+        <div className="flex-1 max-w-2xl flex items-center justify-between px-3 py-1 rounded-lg bg-[#080910] border border-[#202438] text-xs font-mono">
+          <div className="flex items-center gap-2 truncate">
+            <div className="flex items-center gap-1 text-emerald-400 shrink-0" title="Secure Client-Side Sandbox">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span className="text-[10px] uppercase font-bold tracking-wider">SECURE</span>
+            </div>
+            <span className="text-slate-600 select-none">|</span>
+            <span className="text-slate-500 truncate">
+              https://oska-play.internal/runtime/<span className="text-cyan-300 font-semibold">{game.slug}.wasm</span>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="hidden md:inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-600/30 text-emerald-300 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              60 FPS WebGPU
+            </span>
           </div>
         </div>
 
-        {/* Real-time telemetry indicators */}
-        <div className="flex items-center gap-3 text-xs font-mono">
+        {/* Quick Toolbar */}
+        <div className="flex items-center gap-2 shrink-0">
           {game.runtimeConfig?.runtimeType === 'racer-3d' && (
-            <div className="flex items-center gap-3">
-              {/* Speedometer */}
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#181a28] border border-cyan-500/30 text-cyan-300">
+            <div className="hidden lg:flex items-center gap-2">
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#141724] border border-cyan-500/30 text-cyan-300 text-xs font-mono">
                 <span className="text-[10px] text-slate-400">SPEED:</span>
-                <span className="font-extrabold text-sm text-cyan-400">{carSpeedKmh}</span>
-                <span className="text-[10px]">KM/H</span>
-              </div>
-
-              {/* Nitro bar */}
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#181a28] border border-violet-500/30">
-                <span className="text-[10px] text-violet-400 font-bold">NITRO:</span>
-                <div className="w-16 h-2 rounded-full bg-[#121420] overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 transition-all duration-100"
-                    style={{ width: `${carNitro}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Adaptive hardware quality scale */}
-              <div className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#141724] border border-[#23283f] text-[11px] text-slate-300" title="Auto scaled based on your machine performance">
-                <span className="text-slate-400">Scale:</span>
-                <span className="text-emerald-400 font-bold">{adaptiveQualityPill}</span>
+                <span className="font-extrabold text-cyan-400">{carSpeedKmh}</span>
+                <span className="text-[9px]">KM/H</span>
               </div>
             </div>
           )}
 
-          {isWebGame && (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-950/60 border border-cyan-500/30 text-[11px] text-cyan-300 font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>OSKA DirectPlay™ 60 FPS</span>
-            </div>
-          )}
-
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#141724] border border-[#21263d]">
-            <Zap className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="text-emerald-400 font-bold">{currentFps} FPS</span>
+          <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#141724] border border-[#21263d] text-xs font-mono text-emerald-400 font-bold">
+            <Zap className="w-3 h-3 text-emerald-400" />
+            <span>{currentFps} FPS</span>
           </div>
 
           <button
-            onClick={handleRestartGame}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#141624] hover:bg-[#1f2235] text-slate-300 hover:text-white border border-[#21263d] transition-all text-xs"
-            title="Restart Game Engine"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden md:inline">Restart</span>
-          </button>
-
-          <button
-            onClick={handleToggleFullscreen}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#141624] hover:bg-[#1f2235] text-slate-300 hover:text-white border border-[#21263d] transition-all text-xs"
-            title="Fullscreen Mode"
-          >
-            <Maximize2 className="w-3.5 h-3.5 text-violet-400" />
-            <span className="hidden md:inline">Fullscreen</span>
-          </button>
-
-          <button
             onClick={() => setShowControlsModal(true)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1a1d2e] transition-colors"
+            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-[#1a1d2e] transition-colors cursor-pointer"
             title="Controls Guide"
           >
             <HelpCircle className="w-4 h-4" />
@@ -454,40 +511,53 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
         )}
       </div>
 
-      {/* Bottom Control Bar */}
-      <div className="h-14 px-4 bg-[#0d0f18] border-t border-[#1c1f2e] flex items-center justify-between shrink-0 z-20">
-        {/* Left tools: Pause, Save, Restart */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleTogglePause}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141624] hover:bg-[#1f2235] text-xs font-medium text-slate-200 border border-[#21263d] transition-all"
-          >
-            {isPaused ? <Play className="w-3.5 h-3.5 text-emerald-400" /> : <Pause className="w-3.5 h-3.5 text-amber-400" />}
-            <span>{isPaused ? 'Resume' : 'Pause'}</span>
-          </button>
+      {/* Bottom Browser Status Bar */}
+      <div className="h-11 px-3 bg-[#0a0c14] border-t border-[#1b1f30] flex items-center justify-between shrink-0 z-20 font-mono text-xs">
+        {/* Left tools: Live Sandbox Session & Game Controls */}
+        <div className="flex items-center gap-2 truncate">
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-950/60 border border-emerald-600/30 text-emerald-300 text-[11px]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-semibold">In-Browser DirectPlay™ Active</span>
+          </div>
 
-          {game.runtimeConfig?.saveSupported && (
+          <span className="text-slate-700 hidden lg:inline">|</span>
+
+          <span className="text-[11px] text-slate-500 hidden xl:inline">
+            Press <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">ESC</kbd> to unlock cursor
+          </span>
+
+          <div className="flex items-center gap-1.5 ml-1">
             <button
-              onClick={handleManualSave}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141624] hover:bg-[#1f2235] text-xs font-medium text-slate-200 border border-[#21263d] transition-all"
-              title="Save game progress to local IndexedDB"
+              onClick={handleTogglePause}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#131624] hover:bg-[#1f2235] text-[11px] font-medium text-slate-200 border border-[#21263d] transition-all cursor-pointer"
             >
-              <Save className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Save Progress</span>
+              {isPaused ? <Play className="w-3 h-3 text-emerald-400" /> : <Pause className="w-3 h-3 text-amber-400" />}
+              <span>{isPaused ? 'Resume' : 'Pause'}</span>
             </button>
-          )}
 
-          <button
-            onClick={() => setCrtEffect(!crtEffect)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-              crtEffect
-                ? 'bg-violet-600/30 text-violet-300 border-violet-500/50'
-                : 'bg-[#141624] text-slate-400 border-[#21263d] hover:text-white'
-            }`}
-            title="Toggle retro CRT scanlines"
-          >
-            CRT Scanlines
-          </button>
+            {game.runtimeConfig?.saveSupported && (
+              <button
+                onClick={handleManualSave}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#131624] hover:bg-[#1f2235] text-[11px] font-medium text-slate-200 border border-[#21263d] transition-all cursor-pointer"
+                title="Save game progress to local IndexedDB"
+              >
+                <Save className="w-3 h-3 text-cyan-400" />
+                <span>Save Progress</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => setCrtEffect(!crtEffect)}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-medium border transition-all cursor-pointer ${
+                crtEffect
+                  ? 'bg-violet-600/30 text-violet-300 border-violet-500/50'
+                  : 'bg-[#131624] text-slate-400 border-[#21263d] hover:text-white'
+              }`}
+              title="Toggle retro CRT scanlines"
+            >
+              CRT
+            </button>
+          </div>
         </div>
 
         {/* Right tools: Render scale, Fullscreen, Logs */}
@@ -497,7 +567,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
             value={renderScale}
             onChange={(e) => setRenderScale(e.target.value as any)}
             aria-label="Resolution scale"
-            className="px-2.5 py-1.5 rounded-lg bg-[#141624] text-slate-300 text-xs border border-[#21263d] focus:outline-hidden"
+            className="px-2 py-1 rounded-md bg-[#131624] text-slate-300 text-[11px] border border-[#21263d] focus:outline-hidden cursor-pointer"
           >
             <option value="100%">100% Native Scale</option>
             <option value="75%">75% Performance</option>
@@ -506,22 +576,22 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
 
           <button
             onClick={() => setShowConsole(!showConsole)}
-            className={`p-2 rounded-lg border transition-all ${
+            className={`p-1.5 rounded-md border transition-all cursor-pointer ${
               showConsole
                 ? 'bg-cyan-600/20 text-cyan-400 border-cyan-500/40'
-                : 'bg-[#141624] text-slate-400 border-[#21263d] hover:text-white'
+                : 'bg-[#131624] text-slate-400 border-[#21263d] hover:text-white'
             }`}
             title="Toggle Engine Diagnostics Console"
           >
-            <Terminal className="w-4 h-4" />
+            <Terminal className="w-3.5 h-3.5" />
           </button>
 
           <button
             onClick={handleToggleFullscreen}
-            className="p-2 rounded-lg bg-[#141624] hover:bg-[#1f2235] text-slate-300 hover:text-white border border-[#21263d] transition-all"
+            className="p-1.5 rounded-md bg-[#131624] hover:bg-[#1f2235] text-slate-300 hover:text-white border border-[#21263d] transition-all cursor-pointer"
             title="Toggle Fullscreen"
           >
-            <Maximize2 className="w-4 h-4" />
+            <Maximize2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
