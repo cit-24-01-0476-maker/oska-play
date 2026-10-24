@@ -7,7 +7,11 @@
       "headers": [
         {
           "key": "Cross-Origin-Opener-Policy",
-          "value": "unsafe-none"
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "credentialless"
         },
         {
           "key": "Cross-Origin-Resource-Policy",
@@ -25,6 +29,10 @@
         {
           "key": "Content-Type",
           "value": "application/wasm"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "cross-origin"
         },
         {
           "key": "Cache-Control",

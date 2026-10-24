@@ -486,6 +486,22 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
               </div>
             )}
 
+            {/* GTA 5 Interactive Audio Unblock Banner (fixes 66% hang) */}
+            {game.id === 'gta-5' && (
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-950/90 border border-amber-500/70 text-amber-200 text-xs font-semibold shadow-2xl backdrop-blur-md animate-pulse">
+                <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>⚠️ Click game screen to unlock audio &amp; unhang 66% • Press SPACE (Sandbox) or ENTER (Story)</span>
+              </div>
+            )}
+
+            {/* NFS Most Wanted Start Banner */}
+            {game.id === 'nfs-most-wanted' && (
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/90 border border-cyan-500/70 text-cyan-200 text-xs font-semibold shadow-2xl backdrop-blur-md">
+                <Zap className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span>Click &quot;Start game&quot; inside to initialize WebGPU shaders &amp; stream game files</span>
+              </div>
+            )}
+
             <iframe
               key={`${game.id}-${iframeKey}`}
               src={embedSource}
@@ -496,8 +512,9 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
                   e.currentTarget.focus();
                 } catch {}
               }}
-              allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; accelerometer; gyroscope; clipboard-write; keyboard-map"
+              allow="cross-origin-isolated; autoplay; fullscreen *; gamepad *; accelerometer; gyroscope; clipboard-write; keyboard-map; webgpu *"
               referrerPolicy="no-referrer"
+              {...({ credentialless: 'true' } as any)}
               className="w-full flex-1 min-h-[600px] border-0 bg-black"
               title={`${game.title} - OSKA DirectPlay Engine`}
             />
@@ -537,27 +554,27 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           <span className="text-slate-700 hidden lg:inline">|</span>
 
           {game.id === 'gta-5' && (
-            <span className="text-[11px] text-amber-300/90 hidden xl:inline animate-pulse">
-              💡 Click game screen to unlock audio • Press SPACE (Sandbox) or ENTER (Story) • Stream takes 30-60s
+            <span className="text-[11px] text-amber-300 font-semibold hidden md:inline animate-pulse">
+              💡 Click game screen to unlock audio (fixes 66% hang) • Press SPACE (Sandbox) or ENTER (Story)
             </span>
           )}
           {game.id === 'gta-vice-city' && (
-            <span className="text-[11px] text-violet-300/90 hidden xl:inline">
-              💡 Click screen to capture mouse aim • WASD to drive & walk • Press <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">ESC</kbd> to unlock cursor
+            <span className="text-[11px] text-violet-300/90 hidden md:inline">
+              💡 Click screen to capture mouse aim • WASD to drive &amp; walk • Press <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">ESC</kbd> to unlock cursor
             </span>
           )}
           {game.id === 'minecraft-web' && (
-            <span className="text-[11px] text-emerald-300/90 hidden xl:inline">
+            <span className="text-[11px] text-emerald-300/90 hidden md:inline">
               💡 Click canvas to lock mouse camera • E for Inventory • Press <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">ESC</kbd> to unlock cursor
             </span>
           )}
           {game.id === 'nfs-most-wanted' && (
-            <span className="text-[11px] text-cyan-300/90 hidden xl:inline">
-              💡 Arrow Keys / WASD to steer & accelerate • <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">SPACE</kbd> / <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">SHIFT</kbd> for Nitrous Boost
+            <span className="text-[11px] text-cyan-300/90 hidden md:inline">
+              💡 Click &quot;Start game&quot; inside • Arrow Keys / WASD to steer • <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">SPACE</kbd> for Nitrous Boost
             </span>
           )}
           {!['gta-5', 'gta-vice-city', 'minecraft-web', 'nfs-most-wanted'].includes(game.id) && (
-            <span className="text-[11px] text-slate-500 hidden xl:inline">
+            <span className="text-[11px] text-slate-500 hidden md:inline">
               Press <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">ESC</kbd> to unlock cursor
             </span>
           )}

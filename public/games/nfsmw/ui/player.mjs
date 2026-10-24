@@ -107,7 +107,8 @@ startButton.addEventListener("click", async () => {
         const query = new URLSearchParams(location.search);
         query.set("res", resolutionSelect.value);
         frame.src = `${document.body.dataset.runtime}?${query}`;
-        frame.allow = "fullscreen; gamepad; autoplay";
+        frame.allow = "cross-origin-isolated; fullscreen; gamepad; autoplay; webgpu";
+        frame.setAttribute("credentialless", "true");
         stage.append(frame);
         running.hidden = false;
         welcome.hidden = true;
