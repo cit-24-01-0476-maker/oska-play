@@ -99,8 +99,14 @@ export const GameDetailsPage: React.FC<GameDetailsPageProps> = ({
 
             {hasDownload && (
               <button
-                onClick={() => onDownload(game)}
-                className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/20 transition-all"
+                onClick={() => {
+                  if (game.downloadInfo?.directDownloadUrl) {
+                    window.open(game.downloadInfo.directDownloadUrl, '_blank');
+                  } else {
+                    onDownload(game);
+                  }
+                }}
+                className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition-all hover:scale-102"
               >
                 <Download className="w-4 h-4" />
                 DOWNLOAD FOR PC ({game.downloadInfo?.formattedSize})

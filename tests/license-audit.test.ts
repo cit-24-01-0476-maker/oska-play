@@ -22,13 +22,14 @@ describe('Game Catalog Compliance & Licensing Audit', () => {
     }
   });
 
-  it('should block proprietary commercial games (NFS Most Wanted) from execution', () => {
+  it('should block proprietary commercial games (NFS Most Wanted) from browser execution and offer Class C PC download', () => {
     const nfs = INITIAL_GAMES.find((g) => g.id === 'nfs-most-wanted');
     expect(nfs).toBeDefined();
-    expect(nfs?.status).toBe('BLOCKED_LICENSE');
-    expect(nfs?.compatibilityClass).toBe('CLASS_D');
+    expect(nfs?.status).toBe('DOWNLOAD_ONLY');
+    expect(nfs?.compatibilityClass).toBe('CLASS_C');
     expect(nfs?.license.browserDistributionPermitted).toBe(false);
-    expect(nfs?.license.licenseVerificationStatus).toBe('PROPRIETARY_UNLICENSED');
+    expect(nfs?.downloadInfo?.available).toBe(true);
+    expect(nfs?.downloadInfo?.directDownloadUrl).toContain('1vS_sS4Rn4ElQDYznLGBggVtv_7KYSHZN');
   });
 
   it('should classify native-only open source games (OpenTyrian) as DOWNLOAD_ONLY', () => {

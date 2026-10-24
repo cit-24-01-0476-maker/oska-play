@@ -16,6 +16,12 @@ export const DownloadsPage: React.FC<DownloadsPageProps> = ({ games, onSelectGam
 
   const handleStartDownload = (game: Game) => {
     if (!game.downloadInfo) return;
+
+    if (game.downloadInfo.directDownloadUrl) {
+      window.open(game.downloadInfo.directDownloadUrl, '_blank');
+      return;
+    }
+
     setDownloadingId(game.id);
     setDownloadProgress(10);
 
