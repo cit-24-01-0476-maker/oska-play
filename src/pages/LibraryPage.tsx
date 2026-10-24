@@ -15,6 +15,10 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ games, onPlay, onDetai
   const [selectedGenre, setSelectedGenre] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'featured' | 'year' | 'title'>('featured');
 
+  const availableGenres = useMemo(() => {
+    return ['ALL', ...Array.from(new Set(games.map((g) => g.genre)))];
+  }, [games]);
+
   const filteredGames = useMemo(() => {
     return games
       .filter((game) => {
@@ -96,11 +100,11 @@ export const LibraryPage: React.FC<LibraryPageProps> = ({ games, onPlay, onDetai
             aria-label="Filter by genre"
             className="px-3 py-2 bg-[#161827] border border-[#23283e] rounded-xl text-xs text-slate-300 focus:outline-hidden focus:border-violet-500"
           >
-            <option value="ALL">All Genres</option>
-            <option value="Shooter">Shooter</option>
-            <option value="Action">Action</option>
-            <option value="Puzzle">Puzzle</option>
-            <option value="Racing">Racing</option>
+            {availableGenres.map((genre) => (
+              <option key={genre} value={genre}>
+                {genre === 'ALL' ? 'All Genres' : genre}
+              </option>
+            ))}
           </select>
 
           {/* Sort */}

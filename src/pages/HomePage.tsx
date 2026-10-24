@@ -20,8 +20,8 @@ export const HomePage: React.FC<HomePageProps> = ({
 }) => {
   const [selectedGenre, setSelectedGenre] = useState<string>('All');
 
-  const featuredGame = games.find((g) => g.id === 'freedoom-wasm') || games[0];
-  const genres = ['All', 'Shooter', 'Action', 'Puzzle', 'Racing'];
+  const featuredGame = games.find((g) => g.id === 'gta-5') || games[0];
+  const genres = ['All', ...Array.from(new Set(games.map((g) => g.genre)))];
 
   const filteredGames = selectedGenre === 'All'
     ? games
@@ -67,7 +67,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               className="flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold text-sm shadow-lg shadow-violet-600/30 hover:shadow-violet-600/50 hover:scale-102 transition-all"
             >
               <Play className="w-4 h-4 fill-current" />
-              Play Freedoom Now
+              Play {featuredGame ? (featuredGame.title.includes('(') ? featuredGame.title.split('(')[0].trim() : featuredGame.title) : 'Now'}
             </button>
 
             <button

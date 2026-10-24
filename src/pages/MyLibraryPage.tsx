@@ -177,7 +177,7 @@ export const MyLibraryPage: React.FC<MyLibraryPageProps> = ({ games, onPlay, onD
           </div>
         ) : (
           <div className="text-center py-10 text-slate-500 text-xs">
-            No save games recorded in IndexedDB yet. Save progress within Freedoom or 2048 to see checkpoints here.
+            No save games recorded in IndexedDB yet. Save progress within your games to see checkpoints here.
           </div>
         )}
       </section>

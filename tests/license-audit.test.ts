@@ -40,4 +40,15 @@ describe('Game Catalog Compliance & Licensing Audit', () => {
     expect(ot?.downloadInfo?.available).toBe(true);
     expect(ot?.downloadInfo?.sha256Checksum).toBeTruthy();
   });
+
+  it('should expose exactly the 4 requested games in the visible catalog', () => {
+    const visibleGames = INITIAL_GAMES.filter((g) => !g.hidden);
+    expect(visibleGames.map((g) => g.id)).toEqual([
+      'gta-5',
+      'gta-vice-city',
+      'minecraft-web',
+      'nfs-most-wanted',
+    ]);
+  });
 });
+
