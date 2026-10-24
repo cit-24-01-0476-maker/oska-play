@@ -552,9 +552,15 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
 
           <span className="text-slate-700 hidden lg:inline">|</span>
 
-          <span className="text-[11px] text-slate-500 hidden xl:inline">
-            Press <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">ESC</kbd> to unlock cursor
-          </span>
+          {game.id === 'gta-5' ? (
+            <span className="text-[11px] text-amber-300/90 hidden xl:inline animate-pulse">
+              💡 Click game screen to unlock audio • Press SPACE (Sandbox) or ENTER (Story) • Stream takes 30-60s
+            </span>
+          ) : (
+            <span className="text-[11px] text-slate-500 hidden xl:inline">
+              Press <kbd className="px-1.5 py-0.5 rounded-xs bg-[#161826] text-slate-300 text-[10px] border border-[#262a40]">ESC</kbd> to unlock cursor
+            </span>
+          )}
 
           <div className="flex items-center gap-1.5 ml-1">
             <button

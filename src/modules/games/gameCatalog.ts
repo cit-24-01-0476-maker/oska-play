@@ -164,7 +164,7 @@ export const INITIAL_GAMES: Game[] = [
     runtimeConfig: {
       runtimeType: 'web-tab',
       entryPoint: 'minecraft-eagler-web',
-      embedUrl: 'https://g.deev.is/eaglercraft/',
+      embedUrl: '/games/minecraft/index.html',
       canvasWidth: 1280,
       canvasHeight: 720,
       targetFps: 60,
