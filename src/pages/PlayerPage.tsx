@@ -352,6 +352,10 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            <span className="hidden lg:inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 font-semibold" title="Commercial popups and redirects blocked">
+              <ShieldCheck className="w-3 h-3 text-cyan-400" />
+              AdShield™ 0 Ads
+            </span>
             <span className="hidden md:inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-600/30 text-emerald-300 font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               60 FPS WebGPU
@@ -483,6 +487,7 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
                 setIframeLoading(false);
                 addLog(`OSKA DirectPlay Engine initialized for ${game.title}`);
               }}
+              sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-downloads"
               allow="autoplay; fullscreen *; gamepad; accelerometer; gyroscope; clipboard-write; keyboard-map"
               className="w-full flex-1 min-h-[600px] border-0 bg-black"
               title={`${game.title} - OSKA DirectPlay Engine`}
