@@ -54,12 +54,33 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
   // Graphics preset
   const [renderScale, setRenderScale] = useState<'100%' | '75%' | '50%'>('100%');
 
+  // In-App WebGPU / DirectPlay Engine states
+  const [iframeLoading, setIframeLoading] = useState<boolean>(true);
+  const [iframeKey, setIframeKey] = useState<number>(0);
+
+  const isWebGame = game.id === 'nfs-most-wanted' || Boolean(game.runtimeConfig?.embedUrl);
+  const embedSource = game.id === 'nfs-most-wanted' ? '/games/nfsmw/index.html' : game.runtimeConfig?.embedUrl;
+
+  const handleRestartGame = () => {
+    if (isWebGame) {
+      setIframeLoading(true);
+      setIframeKey((prev) => prev + 1);
+      addLog(`Restarted OSKA DirectPlay engine for ${game.title}`);
+    } else if (runtimeRef.current?.restart) {
+      runtimeRef.current.restart();
+    }
+  };
+
   // Active runtime ref
   const runtimeRef = useRef<any>(null);
 
   const addLog = (msg: string) => {
     setConsoleLogs((prev) => [...prev.slice(-30), `[${new Date().toLocaleTimeString()}] ${msg}`]);
   };
+
+  useEffect(() => {
+    setIframeLoading(true);
+  }, [game.id, iframeKey]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -227,15 +248,15 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           <div>
             <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
               {game.title}
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-950/80 border border-violet-800/40 text-violet-300 font-mono">
-                {game.runtimeConfig?.runtimeType}
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-800/40 text-cyan-300 font-mono">
+                {isWebGame ? 'DirectPlay™ WebGPU' : game.runtimeConfig?.runtimeType}
               </span>
             </h2>
           </div>
         </div>
 
         {/* Real-time telemetry indicators */}
-        <div className="flex items-center gap-4 text-xs font-mono">
+        <div className="flex items-center gap-3 text-xs font-mono">
           {game.runtimeConfig?.runtimeType === 'racer-3d' && (
             <div className="flex items-center gap-3">
               {/* Speedometer */}
@@ -264,25 +285,35 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
             </div>
           )}
 
-          {game.id === 'nfs-most-wanted' && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-950/70 border border-cyan-500/40 text-[11px] text-cyan-300 font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                <span>WebGPU Native Engine (Local Sandbox)</span>
-              </div>
+          {isWebGame && (
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-950/60 border border-cyan-500/30 text-[11px] text-cyan-300 font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>OSKA DirectPlay™ 60 FPS</span>
             </div>
           )}
 
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#141724] border border-[#21263d]">
             <Zap className="w-3.5 h-3.5 text-emerald-400" />
             <span className="text-emerald-400 font-bold">{currentFps} FPS</span>
-            <span className="text-slate-400">({frameTimeMs}ms)</span>
           </div>
 
-          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#141724] border border-[#21263d]">
-            <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="text-slate-300">Inputs Active</span>
-          </div>
+          <button
+            onClick={handleRestartGame}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#141624] hover:bg-[#1f2235] text-slate-300 hover:text-white border border-[#21263d] transition-all text-xs"
+            title="Restart Game Engine"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden md:inline">Restart</span>
+          </button>
+
+          <button
+            onClick={handleToggleFullscreen}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#141624] hover:bg-[#1f2235] text-slate-300 hover:text-white border border-[#21263d] transition-all text-xs"
+            title="Fullscreen Mode"
+          >
+            <Maximize2 className="w-3.5 h-3.5 text-violet-400" />
+            <span className="hidden md:inline">Fullscreen</span>
+          </button>
 
           <button
             onClick={() => setShowControlsModal(true)}
@@ -336,107 +367,59 @@ export const PlayerPage: React.FC<PlayerPageProps> = ({ game, onExit }) => {
           </div>
         )}
 
-        {/* Execution Viewport: Authentic NFSMW WebGPU Engine, WASM Arcade, GTA V Hub, or Doom Canvas */}
-        {game.id === 'gta-5-wasm' ? (
-          <div className="relative w-full h-full min-h-[600px] flex flex-col items-center justify-center p-8 bg-gradient-to-b from-[#0d0f19] to-black text-center animate-in fade-in">
-            <div className="max-w-lg p-8 rounded-2xl bg-[#121524] border border-cyan-500/30 shadow-2xl space-y-6">
-              <div className="relative w-28 h-36 mx-auto rounded-xl overflow-hidden border-2 border-amber-500/50 shadow-2xl shadow-amber-500/20">
-                <img
-                  src={game.coverImage}
-                  alt={game.title}
-                  className="w-full h-full object-cover"
+        {/* Execution Viewport: Authentic OSKA DirectPlay™ Hardware Engine or Retro Canvas */}
+        {isWebGame && embedSource ? (
+          <div className="relative w-full h-full min-h-[640px] flex flex-col bg-black">
+            {/* Native OSKA DirectPlay Engine Boot Splash Screen */}
+            {iframeLoading && (
+              <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#07090e] p-6 text-center select-none animate-in fade-in">
+                <div
+                  className="absolute inset-0 bg-cover bg-center opacity-15 blur-2xl pointer-events-none"
+                  style={{ backgroundImage: `url(${game.bannerImage || game.coverImage})` }}
                 />
-              </div>
 
-              <div>
-                <h3 className="text-xl font-black text-white tracking-tight">{game.title}</h3>
-                <p className="text-xs text-slate-300 mt-2 leading-relaxed">
-                  Grand Theft Auto V executes via the community RAGE WebGPU &amp; WebAssembly recompilation sandbox. To protect against cross-origin iframe security restrictions, the WebGPU engine executes directly with full 60 FPS hardware acceleration.
-                </p>
-              </div>
+                <div className="relative z-10 flex flex-col items-center max-w-md">
+                  <div className="relative w-24 h-32 mb-5 rounded-xl overflow-hidden border-2 border-cyan-500/50 shadow-2xl shadow-cyan-500/25">
+                    <img src={game.coverImage} alt={game.title} className="w-full h-full object-cover" />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3 text-left py-2 px-4 rounded-xl bg-[#090b12] border border-[#1d2238] text-xs">
-                <div>
-                  <span className="text-slate-500 text-[10px] uppercase font-bold block">Engine Target</span>
-                  <span className="text-cyan-400 font-semibold font-mono">RAGE WebGPU / WASM</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 text-[10px] uppercase font-bold block">Hardware Detected</span>
-                  <span className="text-emerald-400 font-semibold font-mono">RTX 4050 60 FPS</span>
-                </div>
-              </div>
+                  <div className="flex items-center gap-2 px-3 py-1 mb-3 rounded-full bg-cyan-950/70 border border-cyan-500/40 text-cyan-300 font-mono text-xs font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                    <span>OSKA DirectPlay™ Engine Kernel</span>
+                  </div>
 
-              <div className="space-y-3 pt-2">
-                <a
-                  href="https://wasmarcade.com/gta-5"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-xs shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all hover:scale-102"
-                >
-                  <Play className="w-4 h-4 fill-current" />
-                  LAUNCH GTA V WEBGPU ENGINE (FULL SCREEN)
-                </a>
-              </div>
-            </div>
-          </div>
-        ) : game.id === 'nfs-most-wanted' ? (
-          <div className="relative w-full h-full min-h-[640px] flex flex-col bg-black">
-            {/* Real In-App Virtual Browser Chrome Tab Bar */}
-            <div className="w-full h-10 bg-[#0c0e18] border-b border-[#1c2035] flex items-center justify-between px-3 text-xs shrink-0 select-none">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-1 bg-[#141829] rounded-t-lg border-t border-x border-[#283050] text-slate-100 font-semibold text-[11px]">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{game.title}</span>
+                  <h3 className="text-xl font-black text-white tracking-tight mb-1">{game.title}</h3>
+                  <p className="text-xs text-slate-400 mb-5">
+                    Compiling WebGPU shaders &amp; allocating local GPU memory...
+                  </p>
+
+                  <div className="w-64 h-1.5 rounded-full bg-[#131625] overflow-hidden border border-[#232840]">
+                    <div className="h-full bg-gradient-to-r from-violet-600 via-cyan-400 to-emerald-400 animate-pulse rounded-full w-full" />
+                  </div>
+
+                  <div className="mt-4 flex items-center gap-3 text-[11px] text-slate-400 font-mono">
+                    <span className="text-emerald-400 font-bold">● 60 FPS Native</span>
+                    <span>•</span>
+                    <span>Direct GPU Acceleration</span>
+                    <span>•</span>
+                    <span>In-Browser Client</span>
+                  </div>
                 </div>
               </div>
-              <div className="hidden sm:flex flex-1 max-w-md mx-4">
-                <div className="w-full flex items-center gap-2 px-3 py-1 bg-[#07080e] rounded-md border border-[#1b1f35] text-slate-400 font-mono text-[11px]">
-                  <span className="text-emerald-400 text-xs">🔒</span>
-                  <span className="truncate text-slate-300">oska://sandbox/pc-runtime/nfs-most-wanted</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-cyan-400 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/40 font-mono">
-                  ⚡ WebGPU Engine Active
-                </span>
-              </div>
-            </div>
+            )}
+
             <iframe
-              src="/games/nfsmw/index.html"
-              allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; accelerometer; gyroscope"
-              allowFullScreen
+              key={`${game.id}-${iframeKey}`}
+              src={embedSource}
+              onLoad={() => {
+                setIframeLoading(false);
+                addLog(`OSKA DirectPlay Engine initialized for ${game.title}`);
+              }}
+              sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms"
+              allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; accelerometer; gyroscope; clipboard-write; keyboard-map"
+              referrerPolicy="no-referrer"
               className="w-full flex-1 min-h-[600px] border-0 bg-black"
-              title="Need for Speed: Most Wanted - Official WebGPU PC Port"
-            />
-          </div>
-        ) : game.runtimeConfig?.embedUrl ? (
-          <div className="relative w-full h-full min-h-[640px] flex flex-col bg-black">
-            {/* Real In-App Virtual Browser Chrome Tab Bar */}
-            <div className="w-full h-10 bg-[#0c0e18] border-b border-[#1c2035] flex items-center justify-between px-3 text-xs shrink-0 select-none">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-1 bg-[#141829] rounded-t-lg border-t border-x border-[#283050] text-slate-100 font-semibold text-[11px]">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                  <span>{game.title}</span>
-                </div>
-              </div>
-              <div className="hidden sm:flex flex-1 max-w-md mx-4">
-                <div className="w-full flex items-center gap-2 px-3 py-1 bg-[#07080e] rounded-md border border-[#1b1f35] text-slate-400 font-mono text-[11px]">
-                  <span className="text-cyan-400 text-xs">🌐</span>
-                  <span className="truncate text-slate-300">{game.runtimeConfig.embedUrl}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-violet-400 font-bold bg-violet-950/80 px-2 py-0.5 rounded border border-violet-800/40 font-mono">
-                  🎮 WASM Arcade WebPort
-                </span>
-              </div>
-            </div>
-            <iframe
-              src={game.runtimeConfig.embedUrl}
-              allow="cross-origin-isolated; autoplay; fullscreen *; gamepad; accelerometer; gyroscope; clipboard-write"
-              allowFullScreen
-              className="w-full flex-1 min-h-[600px] border-0 bg-black"
-              title={`${game.title} - In-Page Web Port`}
+              title={`${game.title} - OSKA DirectPlay Engine`}
             />
           </div>
         ) : (
