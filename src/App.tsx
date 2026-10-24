@@ -15,7 +15,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { AdminPage } from './pages/AdminPage';
 
 export function App() {
-  const [games, setGames] = useState<Game[]>(INITIAL_GAMES);
+  const [games, setGames] = useState<Game[]>(INITIAL_GAMES.filter((g) => !g.hidden));
   const [activeTab, setActiveTab] = useState<string>('home');
   const [selectedGame, setSelectedGame] = useState<Game>(INITIAL_GAMES[0]);
   const [diagnostics, setDiagnostics] = useState<PerformanceDiagnostics | null>(null);

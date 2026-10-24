@@ -90,6 +90,7 @@ export interface Game {
   requirements: GameSystemRequirements;
   tags: string[];
   featured?: boolean;
+  hidden?: boolean;
 }
 
 export interface PerformanceDiagnostics {
